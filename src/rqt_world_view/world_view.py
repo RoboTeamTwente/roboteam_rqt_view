@@ -46,7 +46,7 @@ class WorldViewPlugin(Plugin):
         self._widget = QWidget()
 
         # Get path to UI file which should be in the "resource" folder of this package
-        ui_file = os.path.join(rospkg.RosPack().get_path('roboteam_rqt_world'), 'resource', 'WorldView.ui')
+        ui_file = os.path.join(rospkg.RosPack().get_path('roboteam_rqt_view'), 'resource', 'WorldView.ui')
         # Extend the widget with all attributes and children from UI file
         loadUi(ui_file, self._widget)
 
@@ -87,6 +87,9 @@ class WorldViewPlugin(Plugin):
         self.reset_view()
 
         # ---- /Field view initialization ----
+
+        self._font = QtGui.QFont()
+        self._font.setPixelSize(BOT_DIAMETER*0.8)
 
 
     def shutdown_plugin(self):
@@ -137,8 +140,21 @@ class WorldViewPlugin(Plugin):
         # Draw the ball.
         self._scene.addEllipse(message.ball.x, message.ball.y, 50, 50, brush=QtGui.QBrush(QtGui.QColor(255, 100, 0)))
 
+        # Draw the blue bots.
         for bot in message.robots_blue:
-            self._scene.addEllipse(bot.x, bot.y, BOT_DIAMETER, BOT_DIAMETER, brush=QtGui.QBrush(QtCore.Qt.blue))
+            self.draw_robot(bot, QtGui.QColor(255, 255, 0))
 
+        # Draw the yellow bots.
         for bot in message.robots_yellow:
-            self._scene.addEllipse(bot.x, bot.y, BOT_DIAMETER, BOT_DIAMETER, brush=QtGui.QBrush(QtCore.Qt.yellow))
+            self.draw_robot(bot, QtGui.QColor(0, 100, 255))
+
+
+    # Draws a bot from a message, uses the color supplied.
+    def draw_robot(self, bot, color):
+        self._scene.addEllipse(
+            bot.x - BOT_DIAMETER/2, bot.y - BOT_DIAMETER/2,
+            BOT_DIAMETER, BOT_DIAMETER,
+            brush=QtGui.QBrush(color)
+            )
+        id_text = self._scene.addText(str(bot.id), self._font)
+        id_text.setPos(bot.x - BOT_DIAMETER*0.2, bot.y - BOT_DIAMETER*0.5)

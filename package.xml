@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-  <name>roboteam_rqt_world</name>
+  <name>roboteam_rqt_view</name>
   <version>0.0.0</version>
   <description>The rqt_tutorial package</description>
 
