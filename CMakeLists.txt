@@ -8,6 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   rqt_gui
   rqt_gui_py
+  roboteam_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -102,7 +103,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES rqt_tutorial
-#  CATKIN_DEPENDS rospy rqt_gui rqt_gui_py
+  CATKIN_DEPENDS rospy rqt_gui rqt_gui_py roboteam_msgs
 #  DEPENDS system_lib
 )
 

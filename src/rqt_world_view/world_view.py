@@ -2,7 +2,7 @@ import os
 import rospy
 import rospkg
 
-from roboteam_world.msg import World as WorldMessage
+from roboteam_msgs.msg import World as WorldMessage
 
 from qt_gui.plugin import Plugin
 from python_qt_binding import loadUi, QtCore, QtGui
