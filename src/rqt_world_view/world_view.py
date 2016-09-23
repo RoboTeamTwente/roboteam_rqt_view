@@ -138,23 +138,23 @@ class WorldViewPlugin(Plugin):
         self._fieldview.fitInView(self._scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
 
         # Draw the ball.
-        self._scene.addEllipse(message.ball.x, message.ball.y, 50, 50, brush=QtGui.QBrush(QtGui.QColor(255, 100, 0)))
+        self._scene.addEllipse(message.ball.x, -(message.ball.y), 50, 50, brush=QtGui.QBrush(QtGui.QColor(255, 100, 0)))
 
         # Draw the blue bots.
-        for bot in message.robots_blue:
+        for bot in message.robots_yellow:
             self.draw_robot(bot, QtGui.QColor(255, 255, 0))
 
         # Draw the yellow bots.
-        for bot in message.robots_yellow:
+        for bot in message.robots_blue:
             self.draw_robot(bot, QtGui.QColor(0, 100, 255))
 
 
     # Draws a bot from a message, uses the color supplied.
     def draw_robot(self, bot, color):
         self._scene.addEllipse(
-            bot.x - BOT_DIAMETER/2, bot.y - BOT_DIAMETER/2,
+            bot.x - BOT_DIAMETER/2, -(bot.y - BOT_DIAMETER/2),
             BOT_DIAMETER, BOT_DIAMETER,
             brush=QtGui.QBrush(color)
             )
         id_text = self._scene.addText(str(bot.id), self._font)
-        id_text.setPos(bot.x - BOT_DIAMETER*0.2, bot.y - BOT_DIAMETER*0.5)
+        id_text.setPos(bot.x - BOT_DIAMETER*0.2, -(bot.y - BOT_DIAMETER*0.5))
