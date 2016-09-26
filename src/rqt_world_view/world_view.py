@@ -2,6 +2,8 @@ import os
 import rospy
 import rospkg
 
+import math
+
 from roboteam_msgs.msg import World as WorldMessage
 from roboteam_msgs.msg import GeometryData as GeometryMessage
 
@@ -170,5 +172,10 @@ class WorldViewPlugin(Plugin):
             BOT_DIAMETER, BOT_DIAMETER,
             brush=QtGui.QBrush(color)
             )
+        line_pen = QtGui.QPen()
+        line_pen.setWidth(10)
+        rot_line = self._scene.addLine(0, 0, BOT_DIAMETER/2, 0, pen=line_pen)
+        rot_line.setPos(bot.pos.x, -(bot.pos.y - BOT_DIAMETER))
+        rot_line.setRotation(-math.degrees(bot.w))
         id_text = self._scene.addText(str(bot.id), self._font)
         id_text.setPos(bot.pos.x - BOT_DIAMETER*0.2, -(bot.pos.y - BOT_DIAMETER*0.5))
