@@ -3,6 +3,7 @@ import rospy
 import rospkg
 
 from roboteam_msgs.msg import World as WorldMessage
+from roboteam_msgs.msg import GeometryData as GeometryMessage
 
 from qt_gui.plugin import Plugin
 from python_qt_binding import loadUi, QtCore, QtGui
@@ -10,13 +11,6 @@ from python_qt_binding.QtCore import pyqtSignal
 from python_qt_binding.QtWidgets import QWidget, QLabel, QGraphicsScene
 
 from field_graphics_view import FieldGraphicsView
-
-
-FIELD_WIDTH = 9000 # Width of the field in mm.
-FIELD_HEIGHT = 6000 # Height of the field in mm.
-
-HALF_FIELD_WIDTH = FIELD_WIDTH*0.5
-HALF_FIELD_HEIGHT = FIELD_HEIGHT*0.5
 
 BOT_DIAMETER = 180 # Diameter of the bots in mm.
 
@@ -42,6 +36,18 @@ class WorldViewPlugin(Plugin):
             print 'arguments: ', args
             print 'unknowns: ', unknowns
 
+
+        # ---- Field parameters ----
+
+        self.field_width = 9000 # Width of the field in mm.
+        self.field_height = 6000 # Height of the field in mm.
+
+        self.half_field_width = self.field_width*0.5
+        self.half_field_height = self.field_height*0.5
+
+        # ---- /Field parameters ----
+
+
         # Create QWidget
         self._widget = QWidget()
 
@@ -65,10 +71,13 @@ class WorldViewPlugin(Plugin):
 
 
         # Subscribe to the world state.
-        self._worldstate_sub = rospy.Subscriber("world_state", WorldMessage, self.message_callback)
+        self._worldstate_sub = rospy.Subscriber("world_state", WorldMessage, self.worldstate_callback)
+
+        # Subscribe to the geometry information.
+        self._geometry_sub = rospy.Subscriber("vision_geometry", GeometryMessage, self.geometry_callback)
 
         # Connect the signal sent by the callback to the message slot.
-        self._worldstate_signal.connect(self.message_slot)
+        self._worldstate_signal.connect(self.worldstate_slot)
 
         # ---- Field view initialization ----
 
@@ -76,7 +85,7 @@ class WorldViewPlugin(Plugin):
         self._fieldview = FieldGraphicsView()
         self._fieldview.setScene(self._scene)
 
-        self._scene.setSceneRect(-HALF_FIELD_WIDTH, -HALF_FIELD_HEIGHT, FIELD_WIDTH, FIELD_HEIGHT)
+        self._scene.setSceneRect(-self.half_field_width, -self.half_field_height, self.field_width, self.field_height)
 
         # Scale the scene so that it fits into the view area.
         self._fieldview.fitInView(self._scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
@@ -116,26 +125,20 @@ class WorldViewPlugin(Plugin):
         self._scene.clear()
 
         # Draw the background.
-        self._scene.addRect(-HALF_FIELD_WIDTH, -HALF_FIELD_WIDTH, FIELD_WIDTH, FIELD_HEIGHT, pen=QtGui.QPen(), brush=QtGui.QBrush(QtCore.Qt.green))
+        self._scene.addRect(-self.half_field_width, -self.half_field_width, self.field_width, self.field_height, pen=QtGui.QPen(), brush=QtGui.QBrush(QtCore.Qt.green))
 
         # Scale the scene so that it fits into the view area.
         self._fieldview.fitInView(self._scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
 
 
-    def message_callback(self, message):
+    def worldstate_callback(self, message):
         # Send signal to qt thread.
         self._worldstate_signal.emit(message)
 
 
     # Receives the changeUI(PyQt_PyObject) signal which gets sent when a message arrives at 'message_callback'.
-    def message_slot(self, message):
-        self._scene.clear()
-
-        # Draw the background.
-        self._scene.addRect(-HALF_FIELD_WIDTH, -HALF_FIELD_HEIGHT, FIELD_WIDTH, FIELD_HEIGHT, pen=QtGui.QPen(), brush=QtGui.QBrush(QtCore.Qt.green))
-
-        # Scale the scene so that it fits into the view area.
-        self._fieldview.fitInView(self._scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
+    def worldstate_slot(self, message):
+        self.reset_view()
 
         # Draw the ball.
         self._scene.addEllipse(message.ball.x, -(message.ball.y), 50, 50, brush=QtGui.QBrush(QtGui.QColor(255, 100, 0)))
@@ -147,6 +150,17 @@ class WorldViewPlugin(Plugin):
         # Draw the yellow bots.
         for bot in message.robots_blue:
             self.draw_robot(bot, QtGui.QColor(0, 100, 255))
+
+
+    def geometry_callback(self, message):
+        self.field_width = message.field.field_width
+        self.field_length = message.field.field_length
+
+        self.half_field_width = self.field_width * 0.5
+        self.half_field_length = self.field_length * 0.5
+
+        rospy.loginfo("Field width: %i", self.field_width)
+        rospy.loginfo("Field length: %i", self.field_length)
 
 
     # Draws a bot from a message, uses the color supplied.
