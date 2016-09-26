@@ -141,7 +141,7 @@ class WorldViewPlugin(Plugin):
         self.reset_view()
 
         # Draw the ball.
-        self._scene.addEllipse(message.ball.x, -(message.ball.y), 50, 50, brush=QtGui.QBrush(QtGui.QColor(255, 100, 0)))
+        self._scene.addEllipse(message.ball.pos.x, -(message.ball.pos.y), 50, 50, brush=QtGui.QBrush(QtGui.QColor(255, 100, 0)))
 
         # Draw the blue bots.
         for bot in message.robots_yellow:
@@ -166,9 +166,9 @@ class WorldViewPlugin(Plugin):
     # Draws a bot from a message, uses the color supplied.
     def draw_robot(self, bot, color):
         self._scene.addEllipse(
-            bot.x - BOT_DIAMETER/2, -(bot.y - BOT_DIAMETER/2),
+            bot.pos.x - BOT_DIAMETER/2, -(bot.pos.y - BOT_DIAMETER/2),
             BOT_DIAMETER, BOT_DIAMETER,
             brush=QtGui.QBrush(color)
             )
         id_text = self._scene.addText(str(bot.id), self._font)
-        id_text.setPos(bot.x - BOT_DIAMETER*0.2, -(bot.y - BOT_DIAMETER*0.5))
+        id_text.setPos(bot.pos.x - BOT_DIAMETER*0.2, -(bot.pos.y - BOT_DIAMETER*0.5))
