@@ -1,25 +1,42 @@
 import os
 import rospy
 import rospkg
+import actionlib
 
 import math
-
-from roboteam_msgs.msg import World as WorldMessage
-from roboteam_msgs.msg import GeometryData as GeometryMessage
 
 from qt_gui.plugin import Plugin
 from python_qt_binding import loadUi, QtCore, QtGui
 from python_qt_binding.QtCore import pyqtSignal
-from python_qt_binding.QtWidgets import QWidget, QLabel, QGraphicsScene
+from python_qt_binding.QtWidgets import QWidget, QLabel, QGraphicsScene, QGraphicsItemGroup, QGraphicsEllipseItem, QGraphicsLineItem, QGraphicsTextItem
+
+from roboteam_msgs.msg import World as WorldMessage
+from roboteam_msgs.msg import GeometryData as GeometryMessage
+from roboteam_msgs.msg import SteeringAction, SteeringGoal
 
 from field_graphics_view import FieldGraphicsView
+
 
 BOT_DIAMETER = 180 # Diameter of the bots in mm.
 
 
 class WorldViewPlugin(Plugin):
 
-    _worldstate_signal = pyqtSignal(WorldMessage)
+    # Qt signal for when the world state changes.
+    worldstate_signal = pyqtSignal(WorldMessage)
+
+    # Graphic representations of the blue and yellow robots.
+    # QGraphicsItemGroup.
+    robots_blue = {}
+    robots_yellow = {}
+
+    ball = QGraphicsEllipseItem(0, 0, 50, 50)
+
+
+    # Field size in mm.
+    field_width = 9000
+    field_height = 6000
+
 
     def __init__(self, context):
         super(WorldViewPlugin, self).__init__(context)
@@ -30,7 +47,7 @@ class WorldViewPlugin(Plugin):
         from argparse import ArgumentParser
         parser = ArgumentParser()
         # Add argument(s) to the parser.
-        parser.add_argument("-q", "--quiet", action="store_true",
+        parser.add_argument("-q", "---quiet", action="store_true",
                       dest="quiet",
                       help="Put plugin in silent mode")
         args, unknowns = parser.parse_known_args(context.argv())
@@ -39,27 +56,16 @@ class WorldViewPlugin(Plugin):
             print 'unknowns: ', unknowns
 
 
-        # ---- Field parameters ----
-
-        self.field_width = 9000 # Width of the field in mm.
-        self.field_height = 6000 # Height of the field in mm.
-
-        self.half_field_width = self.field_width*0.5
-        self.half_field_height = self.field_height*0.5
-
-        # ---- /Field parameters ----
-
-
         # Create QWidget
-        self._widget = QWidget()
+        self.widget = QWidget()
 
         # Get path to UI file which should be in the "resource" folder of this package
         ui_file = os.path.join(rospkg.RosPack().get_path('roboteam_rqt_view'), 'resource', 'WorldView.ui')
         # Extend the widget with all attributes and children from UI file
-        loadUi(ui_file, self._widget)
+        loadUi(ui_file, self.widget)
 
         # Give QObjects reasonable names
-        self._widget.setObjectName('WorldView')
+        self.widget.setObjectName('WorldView')
 
         # Show _widget.windowTitle on left-top of each plugin (when
         # it's set in _widget). This is useful when you open multiple
@@ -67,45 +73,51 @@ class WorldViewPlugin(Plugin):
         # plugin at once, these lines add number to make it easy to
         # tell from pane to pane.
         if context.serial_number() > 1:
-            self._widget.setWindowTitle(self._widget.windowTitle() + (' (%d)' % context.serial_number()))
+            self.widget.setWindowTitle(self.widget.windowTitle() + (' (%d)' % context.serial_number()))
         # Add widget to the user interface
-        context.add_widget(self._widget)
+        context.add_widget(self.widget)
 
 
         # Subscribe to the world state.
-        self._worldstate_sub = rospy.Subscriber("world_state", WorldMessage, self.worldstate_callback)
+        self.worldstate_sub = rospy.Subscriber("world_state", WorldMessage, self.worldstate_callback)
 
         # Subscribe to the geometry information.
-        self._geometry_sub = rospy.Subscriber("vision_geometry", GeometryMessage, self.geometry_callback)
+        self.geometry_sub = rospy.Subscriber("vision_geometry", GeometryMessage, self.geometry_callback)
 
-        # Connect the signal sent by the callback to the message slot.
-        self._worldstate_signal.connect(self.worldstate_slot)
+        # Create the steering action client.
+        self.client = actionlib.SimpleActionClient("steering", SteeringAction)
+
+        # Connect the signal sent by the worldstate callback to the message slot.
+        self.worldstate_signal.connect(self.worldstate_slot)
+
+
 
         # ---- Field view initialization ----
 
-        self._scene = QGraphicsScene();
-        self._fieldview = FieldGraphicsView()
-        self._fieldview.setScene(self._scene)
-
-        self._scene.setSceneRect(-self.half_field_width, -self.half_field_height, self.field_width, self.field_height)
-
-        # Scale the scene so that it fits into the view area.
-        self._fieldview.fitInView(self._scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
+        self.scene = QGraphicsScene();
+        self.fieldview = FieldGraphicsView()
+        self.fieldview.setScene(self.scene)
 
         # Add to the main window.
-        self._widget.layout().addWidget(self._fieldview)
+        self.widget.layout().addWidget(self.fieldview)
 
         self.reset_view()
 
+        # Add the ball to the scene.
+        self.scene.addItem(self.ball)
+
+        # Ball = orange.
+        self.ball.setBrush(QtGui.QBrush(QtGui.QColor(255, 100, 0)))
+
         # ---- /Field view initialization ----
 
-        self._font = QtGui.QFont()
-        self._font.setPixelSize(BOT_DIAMETER*0.8)
+        self.font = QtGui.QFont()
+        self.font.setPixelSize(BOT_DIAMETER*0.8)
 
 
     def shutdown_plugin(self):
         # TODO unregister all publishers here
-        self._worldstate_sub.unregister()
+        self.worldstate_sub.unregister()
         pass
 
     def save_settings(self, plugin_settings, instance_settings):
@@ -124,58 +136,84 @@ class WorldViewPlugin(Plugin):
         # Usually used to open a modal configuration dialog
 
     def reset_view(self):
-        self._scene.clear()
+        self.scene.clear()
 
         # Draw the background.
-        self._scene.addRect(-self.half_field_width, -self.half_field_width, self.field_width, self.field_height, pen=QtGui.QPen(), brush=QtGui.QBrush(QtCore.Qt.green))
+        self.scene.addRect(-self.field_width/2, -self.field_height/2, self.field_width, self.field_height, pen=QtGui.QPen(), brush=QtGui.QBrush(QtCore.Qt.green))
 
         # Scale the scene so that it fits into the view area.
-        self._fieldview.fitInView(self._scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
+        self.fieldview.fitInView(self.scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
 
 
+    # Is called when a worldstate message is received.
     def worldstate_callback(self, message):
         # Send signal to qt thread.
-        self._worldstate_signal.emit(message)
+        self.worldstate_signal.emit(message)
 
 
     # Receives the changeUI(PyQt_PyObject) signal which gets sent when a message arrives at 'message_callback'.
     def worldstate_slot(self, message):
-        self.reset_view()
+        # Move the ball.
+        self.ball.setPos(message.ball.pos.x, -(message.ball.pos.y))
 
-        # Draw the ball.
-        self._scene.addEllipse(message.ball.pos.x, -(message.ball.pos.y), 50, 50, brush=QtGui.QBrush(QtGui.QColor(255, 100, 0)))
+        # Process the blue bots.
+        for bot in message.robots_blue:
+            if not bot.id in self.robots_blue:
+                self.robots_blue[bot.id] = self.create_new_robot(bot.id, QtGui.QColor(0, 100, 255))
+                self.scene.addItem(self.robots_blue[bot.id])
 
-        # Draw the blue bots.
-        for bot in message.robots_yellow:
-            self.draw_robot(bot, QtGui.QColor(255, 255, 0))
+            screen_bot = self.robots_blue[bot.id]
+            screen_bot.setPos(bot.pos.x, bot.pos.y)
+            screen_bot.setRotation(-math.degrees(bot.w))
 
         # Draw the yellow bots.
-        for bot in message.robots_blue:
-            self.draw_robot(bot, QtGui.QColor(0, 100, 255))
+        for bot in message.robots_yellow:
+            if not bot.id in self.robots_yellow:
+                self.robots_yellow[bot.id] = self.create_new_robot(bot.id, QtGui.QColor(255, 255, 0))
+                self.scene.addItem(self.robots_yellow[bot.id])
+
+            screen_bot = self.robots_yellow[bot.id]
+            screen_bot.setPos(bot.pos.x, bot.pos.y)
+            screen_bot.setRotation(-math.degrees(bot.w))
+
+        # Scale the scene so that it fits into the view area.
+        self.fieldview.fitInView(self.scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
+
 
 
     def geometry_callback(self, message):
         self.field_width = message.field.field_width
         self.field_length = message.field.field_length
 
-        self.half_field_width = self.field_width * 0.5
-        self.half_field_length = self.field_length * 0.5
+        #TODO: Resize the field rectangle.
 
         rospy.loginfo("Field width: %i", self.field_width)
         rospy.loginfo("Field length: %i", self.field_length)
 
 
-    # Draws a bot from a message, uses the color supplied.
-    def draw_robot(self, bot, color):
-        self._scene.addEllipse(
-            bot.pos.x - BOT_DIAMETER/2, -(bot.pos.y - BOT_DIAMETER/2),
-            BOT_DIAMETER, BOT_DIAMETER,
-            brush=QtGui.QBrush(color)
-            )
+    # Creates a QGraphicsItemGroup that represents a robot.
+    # Takes an integer as bot id.
+    # Takes a QColor to color the bot with.
+    # Returns the QGraphicsItemGroup.
+    def create_new_robot(self, bot_id, color):
+        bot = QGraphicsItemGroup()
+
+        ellipse = QGraphicsEllipseItem(-BOT_DIAMETER/2, -BOT_DIAMETER/2, BOT_DIAMETER, BOT_DIAMETER)
+        ellipse.setBrush(QtGui.QBrush(color))
+        bot.addToGroup(ellipse)
+
         line_pen = QtGui.QPen()
         line_pen.setWidth(10)
-        rot_line = self._scene.addLine(0, 0, BOT_DIAMETER/2, 0, pen=line_pen)
-        rot_line.setPos(bot.pos.x, -(bot.pos.y - BOT_DIAMETER))
-        rot_line.setRotation(-math.degrees(bot.w))
-        id_text = self._scene.addText(str(bot.id), self._font)
-        id_text.setPos(bot.pos.x - BOT_DIAMETER*0.2, -(bot.pos.y - BOT_DIAMETER*0.5))
+        rot_line = QGraphicsLineItem(0, 0, BOT_DIAMETER/2, 0)
+        rot_line.setPen(line_pen)
+        bot.addToGroup(rot_line)
+
+        id_text = QGraphicsTextItem(str(bot_id))
+        id_text.setFont(self.font)
+        id_text.setPos(-BOT_DIAMETER/3,-BOT_DIAMETER/2)
+        bot.addToGroup(id_text)
+
+        return bot
+
+        #id_text = self.scene.addText(str(bot.id), self.font)
+        #id_text.setPos(bot.pos.x - BOT_DIAMETER*0.2, -(bot.pos.y - BOT_DIAMETER*0.5))
