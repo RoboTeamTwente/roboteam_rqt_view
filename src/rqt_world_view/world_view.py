@@ -45,6 +45,8 @@ class WorldViewPlugin(Plugin):
 
     ball = QGraphicsEllipseItem(0, 0, 50, 50)
 
+    field_lines = QGraphicsItemGroup()
+
 
     # Field size in mm.
     field_width = 9000
@@ -117,6 +119,9 @@ class WorldViewPlugin(Plugin):
         # Add the field to the scene.
         self.scene.addItem(self.field_background)
         self.field_background.setBrush(QtGui.QBrush(QtGui.QColor(0, 200, 50)))
+
+        # Add the field lines.
+        self.scene.addItem(self.field_lines)
 
         # Add the ball to the scene.
         self.scene.addItem(self.ball)
@@ -216,7 +221,20 @@ class WorldViewPlugin(Plugin):
         self.field_length = message.field.field_length
 
         # Resize the field background.
-        #self.field_background.setRect(-self.field_width/2, -self.field_length/2, self.field_width, self.field_length)
+        self.field_background.setRect(-self.field_width/2, -self.field_length/2, self.field_width, self.field_length)
+
+        # Remove all field lines.
+        for item in self.field_lines.childItems():
+            self.field_lines.removeFromGroup(item)
+            del item
+
+        print message.field.field_lines
+
+        for msg_line in message.field.field_lines:
+            print "Line!"
+            line = QGraphicsLineItem(msg_line.x_begin, msg_line.y_begin, msg_line.x_end, msg_line.y_end)
+            self.field_lines.addToGroup(line)
+
 
         rospy.loginfo("Field width: %i", self.field_width)
         rospy.loginfo("Field length: %i", self.field_length)
