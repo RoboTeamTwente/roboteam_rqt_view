@@ -23,6 +23,15 @@ from field_graphics_scene import FieldGraphicsScene
 BOT_DIAMETER = 180 # Diameter of the bots in mm.
 
 
+# Converts to mm.
+def m_to_mm(meters):
+    return meters * 1000.0
+
+# Converts millimeters to meters.
+def mm_to_m(millimeters):
+    return millimeters / 1000.0
+
+
 class WorldViewPlugin(Plugin):
 
     # Qt signal for when the world state changes.
@@ -48,7 +57,7 @@ class WorldViewPlugin(Plugin):
     field_lines = QGraphicsItemGroup()
 
 
-    # Field size in mm.
+    # Field size in m.
     field_width = 9000
     field_height = 6000
 
@@ -192,7 +201,7 @@ class WorldViewPlugin(Plugin):
                 self.scene.addItem(self.robots_blue[bot.id])
 
             screen_bot = self.robots_blue[bot.id]
-            screen_bot.setPos(bot.pos.x, -bot.pos.y)
+            screen_bot.setPos(m_to_mm(bot.pos.x), -m_to_mm(bot.pos.y))
             screen_bot.setRotation(-math.degrees(bot.w))
 
         # Draw the yellow bots.
@@ -203,7 +212,7 @@ class WorldViewPlugin(Plugin):
                 self.scene.addItem(self.robots_yellow[bot.id])
 
             screen_bot = self.robots_yellow[bot.id]
-            screen_bot.setPos(bot.pos.x, -bot.pos.y)
+            screen_bot.setPos(m_to_mm(bot.pos.x), -m_to_mm(bot.pos.y))
             screen_bot.setRotation(-math.degrees(bot.w))
 
         # Scale the scene so that it fits into the view area.
@@ -217,8 +226,8 @@ class WorldViewPlugin(Plugin):
 
 
     def geometry_slot(self, message):
-        self.field_width = message.field.field_width
-        self.field_length = message.field.field_length
+        self.field_width = m_to_mm(message.field.field_width)
+        self.field_length = m_to_mm(message.field.field_length)
 
         # Resize the field background.
         self.field_background.setRect(-self.field_width/2, -self.field_length/2, self.field_width, self.field_length)
@@ -232,7 +241,9 @@ class WorldViewPlugin(Plugin):
 
         for msg_line in message.field.field_lines:
             print "Line!"
-            line = QGraphicsLineItem(msg_line.x_begin, msg_line.y_begin, msg_line.x_end, msg_line.y_end)
+            line = QGraphicsLineItem(
+                m_to_mm(msg_line.x_begin), m_to_mm(msg_line.y_begin),
+                m_to_mm(msg_line.x_end), m_to_mm(msg_line.y_end))
             self.field_lines.addToGroup(line)
 
 
