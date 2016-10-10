@@ -8,6 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   rqt_gui
   rqt_gui_py
+  actionlib
   roboteam_msgs
 )
 
@@ -103,7 +104,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES rqt_tutorial
-  CATKIN_DEPENDS rospy rqt_gui rqt_gui_py roboteam_msgs
+  CATKIN_DEPENDS rospy rqt_gui rqt_gui_py actionlib roboteam_msgs
 #  DEPENDS system_lib
 )
 
@@ -178,6 +179,12 @@ include_directories(
 #############
 ## Testing ##
 #############
+
+catkin_add_gtest(rqt_view_test
+    test/main.cpp
+	test/SimpleTest.cpp
+)
+target_link_libraries(rqt_view_test ${catkin_LIBRARIES})
 
 ## Add gtest based cpp test target and link libraries
 # catkin_add_gtest(${PROJECT_NAME}-test test/test_rqt_tutorial.cpp)
