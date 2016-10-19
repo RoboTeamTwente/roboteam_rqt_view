@@ -22,6 +22,9 @@ from field_graphics_scene import FieldGraphicsScene
 
 BOT_DIAMETER = 180 # Diameter of the bots in mm.
 
+US_COLOR = QtGui.QColor(255, 50, 50); # The color of our robots.
+THEM_COLOR = QtGui.QColor(255, 255, 0); # The color of the opponents robots.
+
 
 # Converts to mm.
 def m_to_mm(meters):
@@ -39,25 +42,25 @@ class WorldViewPlugin(Plugin):
     # Qt signal for when the graphics calibration changes.
     geometry_signal = pyqtSignal(GeometryMessage)
 
-    # Graphic representations of the blue and yellow robots.
+    # Graphic representations of the us and them robots.
     # QGraphicsItemGroup.
-    robots_blue = {}
-    robots_yellow = {}
+    robots_us = {}
+    robots_them = {}
 
     # References to the selection circles.
-    robots_blue_selectors = {}
-    robots_yellow_selectors = {}
+    robots_us_selectors = {}
+    robots_them_selectors = {}
 
     # List of selected robot id's.
-    robots_blue_selected = []
-    robots_yellow_selected = []
+    robots_us_selected = []
+    robots_them_selected = []
 
     ball = QGraphicsEllipseItem(0, 0, 50, 50)
 
     field_lines = QGraphicsItemGroup()
 
 
-    # Field size in m.
+    # Field size in mm.
     field_width = 9000
     field_height = 6000
 
@@ -191,29 +194,29 @@ class WorldViewPlugin(Plugin):
     # Receives the changeUI(PyQt_PyObject) signal which gets sent when a message arrives at 'message_callback'.
     def worldstate_slot(self, message):
         # Move the ball.
-        self.ball.setPos(message.ball.pos.x, -(message.ball.pos.y))
+        self.ball.setPos(m_to_mm(message.ball.pos.x), -(m_to_mm(message.ball.pos.y)))
 
-        # Process the blue bots.
-        for bot in message.robots_blue:
-            if not bot.id in self.robots_blue:
-                (self.robots_blue[bot.id], self.robots_blue_selectors[bot.id]) = \
-                        self.create_new_robot(bot.id, QtGui.QColor(0, 100, 255))
-                self.scene.addItem(self.robots_blue[bot.id])
+        # Process the us bots.
+        for bot in message.us:
+            if not bot.id in self.robots_us:
+                (self.robots_us[bot.id], self.robots_us_selectors[bot.id]) = \
+                        self.create_new_robot(bot.id, US_COLOR, True)
+                self.scene.addItem(self.robots_us[bot.id])
 
-            screen_bot = self.robots_blue[bot.id]
+            screen_bot = self.robots_us[bot.id]
             screen_bot.setPos(m_to_mm(bot.pos.x), -m_to_mm(bot.pos.y))
-            screen_bot.setRotation(-math.degrees(bot.w))
+            screen_bot.setRotation(-math.degrees(bot.angle))
 
-        # Draw the yellow bots.
-        for bot in message.robots_yellow:
-            if not bot.id in self.robots_yellow:
-                (self.robots_yellow[bot.id], self.robots_yellow_selectors[bot.id]) = \
-                        self.create_new_robot(bot.id, QtGui.QColor(255, 255, 0))
-                self.scene.addItem(self.robots_yellow[bot.id])
+        # Draw the them bots.
+        for bot in message.them:
+            if not bot.id in self.robots_them:
+                (self.robots_them[bot.id], self.robots_them_selectors[bot.id]) = \
+                        self.create_new_robot(bot.id, THEM_COLOR, False)
+                self.scene.addItem(self.robots_them[bot.id])
 
-            screen_bot = self.robots_yellow[bot.id]
+            screen_bot = self.robots_them[bot.id]
             screen_bot.setPos(m_to_mm(bot.pos.x), -m_to_mm(bot.pos.y))
-            screen_bot.setRotation(-math.degrees(bot.w))
+            screen_bot.setRotation(-math.degrees(bot.angle))
 
         # Scale the scene so that it fits into the view area.
         self.fieldview.fitInView(self.scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
@@ -254,20 +257,20 @@ class WorldViewPlugin(Plugin):
     # Slot for the scenes selectionChanged signal.
     def selection_changed_slot(self):
         # Clear the selection lists.
-        del self.robots_blue_selected[:]
-        del self.robots_yellow_selected[:]
+        del self.robots_us_selected[:]
+        del self.robots_them_selected[:]
 
-        for bot_id, selector in self.robots_blue_selectors.iteritems():
+        for bot_id, selector in self.robots_us_selectors.iteritems():
             if selector.isSelected():
                 selector.setVisible(True)
-                self.robots_blue_selected.append(bot_id)
+                self.robots_us_selected.append(bot_id)
             else:
                 selector.setVisible(False)
 
-        for bot_id, selector in self.robots_yellow_selectors.iteritems():
+        for bot_id, selector in self.robots_them_selectors.iteritems():
             if selector.isSelected():
                 selector.setVisible(True)
-                self.robots_yellow_selected.append(bot_id)
+                self.robots_them_selected.append(bot_id)
             else:
                 selector.setVisible(False)
 
@@ -276,7 +279,7 @@ class WorldViewPlugin(Plugin):
     def view_right_clicked_slot(self, event):
         #TODO: Only send actions when there is a server connected.
 
-        for bot_id in self.robots_yellow_selected:
+        for bot_id in self.robots_us_selected:
             goal_pos = event.scenePos()
 
             goal = SteeringGoal()
@@ -287,6 +290,8 @@ class WorldViewPlugin(Plugin):
             goal.x = goal_pos.x()/1000.0
             goal.y = -goal_pos.y()/1000.0
 
+            rospy.loginfo("Robot %i go to: %f, %f", bot_id, goal.x, goal.y)
+
             self.client.send_goal(goal)
             self.client.wait_for_result(rospy.Duration.from_sec(1.0))
 
@@ -295,14 +300,15 @@ class WorldViewPlugin(Plugin):
     # Creates a QGraphicsItemGroup that represents a robot.
     # Takes an integer as bot id.
     # Takes a QColor to color the bot with.
+    # `is_selectable` determines whether the robot is selectable with the mouse.
     # Returns (QGraphicsItemGroup, QGraphicsEllipseItem)
     # Returns the QGraphicsItemGroup representing the bot
     # plus the QGraphicsEllipse used for indicating the bot is selected.
-    def create_new_robot(self, bot_id, color):
+    def create_new_robot(self, bot_id, color, is_selectable):
         bot = QGraphicsItemGroup()
 
         # Make the bot selectable.
-        bot.setFlag(QtWidgets.QGraphicsItem.ItemIsSelectable, True)
+        bot.setFlag(QtWidgets.QGraphicsItem.ItemIsSelectable, is_selectable)
 
         ellipse = QGraphicsEllipseItem(-BOT_DIAMETER/2, -BOT_DIAMETER/2, BOT_DIAMETER, BOT_DIAMETER)
         ellipse.setBrush(QtGui.QBrush(color))
