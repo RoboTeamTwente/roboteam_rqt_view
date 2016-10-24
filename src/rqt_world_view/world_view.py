@@ -47,6 +47,10 @@ class WorldViewPlugin(Plugin):
     robots_us = {}
     robots_them = {}
 
+    # Part of the robot representation that should rotate.
+    robots_us_rotators = {}
+    robots_them_rotators = {}
+
     # References to the selection circles.
     robots_us_selectors = {}
     robots_them_selectors = {}
@@ -120,6 +124,9 @@ class WorldViewPlugin(Plugin):
         self.scene = FieldGraphicsScene();
         self.fieldview = FieldGraphicsView()
         self.fieldview.setScene(self.scene)
+
+        # Enable antialiasing.
+        self.fieldview.setRenderHints(QtGui.QPainter.Antialiasing)
 
         # Add to the main window.
         self.widget.layout().addWidget(self.fieldview)
@@ -199,24 +206,22 @@ class WorldViewPlugin(Plugin):
         # Process the us bots.
         for bot in message.us:
             if not bot.id in self.robots_us:
-                (self.robots_us[bot.id], self.robots_us_selectors[bot.id]) = \
+                (self.robots_us[bot.id], self.robots_us_rotators[bot.id], self.robots_us_selectors[bot.id]) = \
                         self.create_new_robot(bot.id, US_COLOR, True)
                 self.scene.addItem(self.robots_us[bot.id])
 
-            screen_bot = self.robots_us[bot.id]
-            screen_bot.setPos(m_to_mm(bot.pos.x), -m_to_mm(bot.pos.y))
-            screen_bot.setRotation(-math.degrees(bot.angle))
+            self.robots_us[bot.id].setPos(m_to_mm(bot.pos.x), -m_to_mm(bot.pos.y))
+            self.robots_us_rotators[bot.id].setRotation(-math.degrees(bot.angle))
 
         # Draw the them bots.
         for bot in message.them:
             if not bot.id in self.robots_them:
-                (self.robots_them[bot.id], self.robots_them_selectors[bot.id]) = \
+                (self.robots_them[bot.id], self.robots_them_rotators[bot.id], self.robots_them_selectors[bot.id]) = \
                         self.create_new_robot(bot.id, THEM_COLOR, False)
                 self.scene.addItem(self.robots_them[bot.id])
 
-            screen_bot = self.robots_them[bot.id]
-            screen_bot.setPos(m_to_mm(bot.pos.x), -m_to_mm(bot.pos.y))
-            screen_bot.setRotation(-math.degrees(bot.angle))
+            self.robots_them[bot.id].setPos(m_to_mm(bot.pos.x), -m_to_mm(bot.pos.y))
+            self.robots_them_rotators[bot.id].setRotation(-math.degrees(bot.angle))
 
         # Scale the scene so that it fits into the view area.
         self.fieldview.fitInView(self.scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
@@ -306,19 +311,22 @@ class WorldViewPlugin(Plugin):
     # plus the QGraphicsEllipse used for indicating the bot is selected.
     def create_new_robot(self, bot_id, color, is_selectable):
         bot = QGraphicsItemGroup()
+        # Part of the bot that should rotate.
+        rotator = QGraphicsItemGroup()
+        bot.addToGroup(rotator)
 
         # Make the bot selectable.
         bot.setFlag(QtWidgets.QGraphicsItem.ItemIsSelectable, is_selectable)
 
         ellipse = QGraphicsEllipseItem(-BOT_DIAMETER/2, -BOT_DIAMETER/2, BOT_DIAMETER, BOT_DIAMETER)
         ellipse.setBrush(QtGui.QBrush(color))
-        bot.addToGroup(ellipse)
+        rotator.addToGroup(ellipse)
 
         line_pen = QtGui.QPen()
         line_pen.setWidth(10)
         rot_line = QGraphicsLineItem(0, 0, BOT_DIAMETER/2, 0)
         rot_line.setPen(line_pen)
-        bot.addToGroup(rot_line)
+        rotator.addToGroup(rot_line)
 
         id_text = QGraphicsTextItem(str(bot_id))
         id_text.setFont(self.font)
@@ -336,7 +344,7 @@ class WorldViewPlugin(Plugin):
         selector_ellipse.setVisible(False)
         bot.addToGroup(selector_ellipse)
 
-        return (bot, selector_ellipse)
+        return (bot, rotator, selector_ellipse)
 
         #id_text = self.scene.addText(str(bot.id), self.font)
         #id_text.setPos(bot.pos.x - BOT_DIAMETER*0.2, -(bot.pos.y - BOT_DIAMETER*0.5))
