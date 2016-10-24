@@ -101,10 +101,10 @@ class WorldViewPlugin(Plugin):
         context.add_widget(self.widget)
 
         # Subscribe to the world state.
-        self.worldstate_sub = rospy.Subscriber("world_state", WorldMessage, self.worldstate_callback)
+        self.worldstate_sub = rospy.Subscriber("world_state", WorldMessage, self.callback_worldstate)
 
         # Subscribe to the geometry information.
-        self.geometry_sub = rospy.Subscriber("vision_geometry", GeometryMessage, self.geometry_callback)
+        self.geometry_sub = rospy.Subscriber("vision_geometry", GeometryMessage, self.callback_geometry)
 
         # Create the steering action client.
         self.client = actionlib.SimpleActionClient("steering", SteeringAction)
@@ -119,7 +119,7 @@ class WorldViewPlugin(Plugin):
         self.fieldview.setRenderHints(QtGui.QPainter.Antialiasing)
 
         # Add to the main window.
-        self.widget.layout().addWidget(self.fieldview)
+        self.widget.l_main_layout.layout().addWidget(self.fieldview)
 
         #self.fieldview.setDragMode(FieldGraphicsView.RubberBandDrag)
 
@@ -148,15 +148,21 @@ class WorldViewPlugin(Plugin):
         # ---- Signal connections ----
 
         # Connect the signal sent by the worldstate callback to the message slot.
-        self.worldstate_signal.connect(self.worldstate_slot)
+        self.worldstate_signal.connect(self.slot_worldstate)
         # Connect the Geometry callback to the Geometry slot.
-        self.geometry_signal.connect(self.geometry_slot)
+        self.geometry_signal.connect(self.slot_geometry)
 
         # Connect the scene's selectionChanged signal.
-        self.scene.selectionChanged.connect(self.selection_changed_slot)
+        self.scene.selectionChanged.connect(self.slot_selection_changed)
 
         # Connect the scenes right click signal.
-        self.scene.right_click_signal.connect(self.view_right_clicked_slot)
+        self.scene.right_click_signal.connect(self.slot_view_right_clicked)
+
+
+        # Connect the toolbar buttons.
+        self.widget.b_select_all.clicked.connect(self.slot_select_all_button)
+        self.widget.b_clear_selection.clicked.connect(self.slot_clear_selection_button)
+        self.widget.b_reset_view.clicked.connect(self.slot_reset_view_button)
 
         # ---- /Signal connections ----
 
@@ -183,13 +189,13 @@ class WorldViewPlugin(Plugin):
 
 
     # Is called when a worldstate message is received.
-    def worldstate_callback(self, message):
+    def callback_worldstate(self, message):
         # Send signal to qt thread.
         self.worldstate_signal.emit(message)
 
 
     # Receives the changeUI(PyQt_PyObject) signal which gets sent when a message arrives at 'message_callback'.
-    def worldstate_slot(self, message):
+    def slot_worldstate(self, message):
         # Move the ball.
         self.ball.setPos(m_to_mm(message.ball.pos.x), -(m_to_mm(message.ball.pos.y)))
 
@@ -211,17 +217,14 @@ class WorldViewPlugin(Plugin):
             self.robots_them[bot.id].setPos(m_to_mm(bot.pos.x), -m_to_mm(bot.pos.y))
             self.robots_them[bot.id].rotate_to(-math.degrees(bot.angle))
 
-        # Scale the scene so that it fits into the view area.
-        self.fieldview.fitInView(self.scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
 
 
-
-    def geometry_callback(self, message):
+    def callback_geometry(self, message):
         # Send signal to qt thread.
         self.geometry_signal.emit(message)
 
 
-    def geometry_slot(self, message):
+    def slot_geometry(self, message):
         self.field_width = m_to_mm(message.field.field_width)
         self.field_length = m_to_mm(message.field.field_length)
 
@@ -242,16 +245,12 @@ class WorldViewPlugin(Plugin):
                 m_to_mm(msg_line.x_end), m_to_mm(msg_line.y_end))
             self.field_lines.addToGroup(line)
 
-
-        # Scale the scene so that it fits into the view area.
-        self.fieldview.fitInView(self.scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
-
         rospy.loginfo("Field width: %i", self.field_width)
         rospy.loginfo("Field length: %i", self.field_length)
 
 
     # Slot for the scenes selectionChanged signal.
-    def selection_changed_slot(self):
+    def slot_selection_changed(self):
         # Clear the selection lists.
         del self.robots_us_selected[:]
 
@@ -261,7 +260,7 @@ class WorldViewPlugin(Plugin):
 
 
     # Called when the view is right clicked.
-    def view_right_clicked_slot(self, event):
+    def slot_view_right_clicked(self, event):
         #TODO: Only send actions when there is a server connected.
 
         for bot_id in self.robots_us_selected:
@@ -280,51 +279,21 @@ class WorldViewPlugin(Plugin):
             self.client.send_goal(goal)
             self.client.wait_for_result(rospy.Duration.from_sec(1.0))
 
+# ------------------------------------------------------------------------------
+# ---------- Button slots ------------------------------------------------------
+# ------------------------------------------------------------------------------
 
+    # Called when the select all button is clicked.
+    def slot_select_all_button(self):
+        for bot_id, bot in self.robots_us.iteritems():
+            bot.setSelected(True)
 
-    # # Creates a QGraphicsItemGroup that represents a robot.
-    # # Takes an integer as bot id.
-    # # Takes a QColor to color the bot with.
-    # # `is_selectable` determines whether the robot is selectable with the mouse.
-    # # Returns (QGraphicsItemGroup, QGraphicsEllipseItem)
-    # # Returns the QGraphicsItemGroup representing the bot
-    # # plus the QGraphicsEllipse used for indicating the bot is selected.
-    # def create_new_robot(self, bot_id, color, is_selectable):
-    #     bot = QGraphicsItemGroup()
-    #     # Part of the bot that should rotate.
-    #     rotator = QGraphicsItemGroup()
-    #     bot.addToGroup(rotator)
-    #
-    #     # Make the bot selectable.
-    #     bot.setFlag(QtWidgets.QGraphicsItem.ItemIsSelectable, is_selectable)
-    #
-    #     ellipse = QGraphicsEllipseItem(-BOT_DIAMETER/2, -BOT_DIAMETER/2, BOT_DIAMETER, BOT_DIAMETER)
-    #     ellipse.setBrush(QtGui.QBrush(color))
-    #     rotator.addToGroup(ellipse)
-    #
-    #     line_pen = QtGui.QPen()
-    #     line_pen.setWidth(10)
-    #     rot_line = QGraphicsLineItem(0, 0, BOT_DIAMETER/2, 0)
-    #     rot_line.setPen(line_pen)
-    #     rotator.addToGroup(rot_line)
-    #
-    #     id_text = QGraphicsTextItem(str(bot_id))
-    #     id_text.setFont(self.font)
-    #     id_text.setPos(-BOT_DIAMETER/3,-BOT_DIAMETER/2)
-    #     bot.addToGroup(id_text)
-    #
-    #     selection_pen = QtGui.QPen(QtGui.QColor(0, 255, 255))
-    #     selection_pen.setWidth(10)
-    #
-    #     # Pixels for the selection circle to be bigger than the bot.
-    #     offset = BOT_DIAMETER * 0.3
-    #
-    #     selector_ellipse = QGraphicsEllipseItem(-((BOT_DIAMETER/2)+offset/2), -((BOT_DIAMETER/2)+offset/2), BOT_DIAMETER + offset, BOT_DIAMETER + offset)
-    #     selector_ellipse.setPen(selection_pen)
-    #     selector_ellipse.setVisible(False)
-    #     bot.addToGroup(selector_ellipse)
-    #
-    #     return (bot, rotator, selector_ellipse)
-    #
-    #     #id_text = self.scene.addText(str(bot.id), self.font)
-    #     #id_text.setPos(bot.pos.x - BOT_DIAMETER*0.2, -(bot.pos.y - BOT_DIAMETER*0.5))
+    # Called when the clear selection button is clicked.
+    def slot_clear_selection_button(self):
+        for bot_id, bot in self.robots_us.iteritems():
+            bot.setSelected(False)
+
+    # Called when the reset view button is clicked.
+    def slot_reset_view_button(self):
+        # Scale the scene so that it fits into the view area.
+        self.fieldview.fitInView(self.scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
