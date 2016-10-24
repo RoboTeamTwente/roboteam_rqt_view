@@ -19,6 +19,7 @@ from roboteam_msgs.msg import SteeringAction, SteeringGoal
 from field_graphics_view import FieldGraphicsView
 from field_graphics_scene import FieldGraphicsScene
 from graphics_robot import GraphicsRobot
+from widget_robot_details import WidgetRobotDetails
 
 
 BOT_DIAMETER = 180 # Diameter of the bots in mm.
@@ -42,8 +43,10 @@ class WorldViewPlugin(Plugin):
 
     # Graphic representations of the us and them robots.
     # QGraphicsItemGroup.
-    robots_us = {}
+    robots_us_graphic = {}
     robots_them = {}
+
+    robots_us_sidebar = {}
 
     # List of selected robot id's.
     robots_us_selected = []
@@ -201,12 +204,17 @@ class WorldViewPlugin(Plugin):
 
         # Process the us bots.
         for bot in message.us:
-            if not bot.id in self.robots_us:
-                self.robots_us[bot.id] = GraphicsRobot(bot.id, True, self.font)
-                self.scene.addItem(self.robots_us[bot.id])
+            if not bot.id in self.robots_us_graphic:
+                # Create a graphics item for this robot.
+                self.robots_us_graphic[bot.id] = GraphicsRobot(bot.id, True, self.font)
+                self.scene.addItem(self.robots_us_graphic[bot.id])
 
-            self.robots_us[bot.id].setPos(m_to_mm(bot.pos.x), -m_to_mm(bot.pos.y))
-            self.robots_us[bot.id].rotate_to(-math.degrees(bot.angle))
+                # Create a list item for this robot.
+                self.robots_us_sidebar[bot.id] = WidgetRobotDetails(bot.id)
+                self.widget.l_side_layout.addWidget(self.robots_us_sidebar[bot.id])
+
+            self.robots_us_graphic[bot.id].setPos(m_to_mm(bot.pos.x), -m_to_mm(bot.pos.y))
+            self.robots_us_graphic[bot.id].rotate_to(-math.degrees(bot.angle))
 
         # Process the them bots.
         for bot in message.them:
@@ -254,7 +262,7 @@ class WorldViewPlugin(Plugin):
         # Clear the selection lists.
         del self.robots_us_selected[:]
 
-        for bot_id, bot in self.robots_us.iteritems():
+        for bot_id, bot in self.robots_us_graphic.iteritems():
             if bot.isSelected():
                 self.robots_us_selected.append(bot_id)
 
@@ -285,12 +293,12 @@ class WorldViewPlugin(Plugin):
 
     # Called when the select all button is clicked.
     def slot_select_all_button(self):
-        for bot_id, bot in self.robots_us.iteritems():
+        for bot_id, bot in self.robots_us_graphic.iteritems():
             bot.setSelected(True)
 
     # Called when the clear selection button is clicked.
     def slot_clear_selection_button(self):
-        for bot_id, bot in self.robots_us.iteritems():
+        for bot_id, bot in self.robots_us_graphic.iteritems():
             bot.setSelected(False)
 
     # Called when the reset view button is clicked.
