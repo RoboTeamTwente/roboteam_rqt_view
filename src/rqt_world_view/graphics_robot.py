@@ -17,7 +17,7 @@ class GraphicsRobot(QGraphicsItemGroup):
     #   Otherwhise it will be yellow and not selectable.
     # font: QFont() -> The font to use to draw the id with.
     def __init__(self, bot_id, is_us, font):
-        super(QGraphicsItemGroup, self).__init__()
+        super(GraphicsRobot, self).__init__()
 
         self.bot_id = bot_id
         self.is_us = is_us

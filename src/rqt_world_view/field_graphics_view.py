@@ -15,13 +15,18 @@ class FieldGraphicsView(QGraphicsView):
         self._last_scene_center = None
 
     def mousePressEvent(self, mouse_event):
-        self._last_pan_point = mouse_event.pos()
-        self._last_scene_center = self.mapToScene(self.frameRect().center())
-        self.setCursor(Qt.ClosedHandCursor)
+        if (mouse_event.button() == Qt.LeftButton):
+            self._last_pan_point = mouse_event.pos()
+            self._last_scene_center = self.mapToScene(self.frameRect().center())
+
+        super(FieldGraphicsView, self).mousePressEvent(mouse_event)
 
     def mouseReleaseEvent(self, mouse_event):
-        self.setCursor(Qt.ArrowCursor)
-        self._last_pan_point = None
+        if (mouse_event.button() == Qt.LeftButton):
+            self.setCursor(Qt.ArrowCursor)
+            self._last_pan_point = None
+
+        super(FieldGraphicsView, self).mouseReleaseEvent(mouse_event)
 
     def mouseMoveEvent(self, mouse_event):
         if self._last_pan_point is not None:
@@ -30,6 +35,7 @@ class FieldGraphicsView(QGraphicsView):
                 self.centerOn(self._last_scene_center - delta_scene)
                 self._last_scene_center -= delta_scene
             self._last_pan_point = mouse_event.pos()
+            self.setCursor(Qt.ClosedHandCursor)
         QGraphicsView.mouseMoveEvent(self, mouse_event)
 
 
