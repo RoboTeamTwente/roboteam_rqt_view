@@ -18,12 +18,10 @@ from roboteam_msgs.msg import SteeringAction, SteeringGoal
 
 from field_graphics_view import FieldGraphicsView
 from field_graphics_scene import FieldGraphicsScene
+from graphics_robot import GraphicsRobot
 
 
 BOT_DIAMETER = 180 # Diameter of the bots in mm.
-
-US_COLOR = QtGui.QColor(255, 50, 50); # The color of our robots.
-THEM_COLOR = QtGui.QColor(255, 255, 0); # The color of the opponents robots.
 
 
 # Converts to mm.
@@ -46,14 +44,6 @@ class WorldViewPlugin(Plugin):
     # QGraphicsItemGroup.
     robots_us = {}
     robots_them = {}
-
-    # Part of the robot representation that should rotate.
-    robots_us_rotators = {}
-    robots_them_rotators = {}
-
-    # References to the selection circles.
-    robots_us_selectors = {}
-    robots_them_selectors = {}
 
     # List of selected robot id's.
     robots_us_selected = []
@@ -206,22 +196,20 @@ class WorldViewPlugin(Plugin):
         # Process the us bots.
         for bot in message.us:
             if not bot.id in self.robots_us:
-                (self.robots_us[bot.id], self.robots_us_rotators[bot.id], self.robots_us_selectors[bot.id]) = \
-                        self.create_new_robot(bot.id, US_COLOR, True)
+                self.robots_us[bot.id] = GraphicsRobot(bot.id, True, self.font)
                 self.scene.addItem(self.robots_us[bot.id])
 
             self.robots_us[bot.id].setPos(m_to_mm(bot.pos.x), -m_to_mm(bot.pos.y))
-            self.robots_us_rotators[bot.id].setRotation(-math.degrees(bot.angle))
+            self.robots_us[bot.id].rotate_to(-math.degrees(bot.angle))
 
-        # Draw the them bots.
+        # Process the them bots.
         for bot in message.them:
             if not bot.id in self.robots_them:
-                (self.robots_them[bot.id], self.robots_them_rotators[bot.id], self.robots_them_selectors[bot.id]) = \
-                        self.create_new_robot(bot.id, THEM_COLOR, False)
+                self.robots_them[bot.id] = GraphicsRobot(bot.id, False, self.font)
                 self.scene.addItem(self.robots_them[bot.id])
 
             self.robots_them[bot.id].setPos(m_to_mm(bot.pos.x), -m_to_mm(bot.pos.y))
-            self.robots_them_rotators[bot.id].setRotation(-math.degrees(bot.angle))
+            self.robots_them[bot.id].rotate_to(-math.degrees(bot.angle))
 
         # Scale the scene so that it fits into the view area.
         self.fieldview.fitInView(self.scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
@@ -255,6 +243,9 @@ class WorldViewPlugin(Plugin):
             self.field_lines.addToGroup(line)
 
 
+        # Scale the scene so that it fits into the view area.
+        self.fieldview.fitInView(self.scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
+
         rospy.loginfo("Field width: %i", self.field_width)
         rospy.loginfo("Field length: %i", self.field_length)
 
@@ -263,21 +254,10 @@ class WorldViewPlugin(Plugin):
     def selection_changed_slot(self):
         # Clear the selection lists.
         del self.robots_us_selected[:]
-        del self.robots_them_selected[:]
 
-        for bot_id, selector in self.robots_us_selectors.iteritems():
-            if selector.isSelected():
-                selector.setVisible(True)
+        for bot_id, bot in self.robots_us.iteritems():
+            if bot.isSelected():
                 self.robots_us_selected.append(bot_id)
-            else:
-                selector.setVisible(False)
-
-        for bot_id, selector in self.robots_them_selectors.iteritems():
-            if selector.isSelected():
-                selector.setVisible(True)
-                self.robots_them_selected.append(bot_id)
-            else:
-                selector.setVisible(False)
 
 
     # Called when the view is right clicked.
@@ -302,49 +282,49 @@ class WorldViewPlugin(Plugin):
 
 
 
-    # Creates a QGraphicsItemGroup that represents a robot.
-    # Takes an integer as bot id.
-    # Takes a QColor to color the bot with.
-    # `is_selectable` determines whether the robot is selectable with the mouse.
-    # Returns (QGraphicsItemGroup, QGraphicsEllipseItem)
-    # Returns the QGraphicsItemGroup representing the bot
-    # plus the QGraphicsEllipse used for indicating the bot is selected.
-    def create_new_robot(self, bot_id, color, is_selectable):
-        bot = QGraphicsItemGroup()
-        # Part of the bot that should rotate.
-        rotator = QGraphicsItemGroup()
-        bot.addToGroup(rotator)
-
-        # Make the bot selectable.
-        bot.setFlag(QtWidgets.QGraphicsItem.ItemIsSelectable, is_selectable)
-
-        ellipse = QGraphicsEllipseItem(-BOT_DIAMETER/2, -BOT_DIAMETER/2, BOT_DIAMETER, BOT_DIAMETER)
-        ellipse.setBrush(QtGui.QBrush(color))
-        rotator.addToGroup(ellipse)
-
-        line_pen = QtGui.QPen()
-        line_pen.setWidth(10)
-        rot_line = QGraphicsLineItem(0, 0, BOT_DIAMETER/2, 0)
-        rot_line.setPen(line_pen)
-        rotator.addToGroup(rot_line)
-
-        id_text = QGraphicsTextItem(str(bot_id))
-        id_text.setFont(self.font)
-        id_text.setPos(-BOT_DIAMETER/3,-BOT_DIAMETER/2)
-        bot.addToGroup(id_text)
-
-        selection_pen = QtGui.QPen(QtGui.QColor(0, 255, 255))
-        selection_pen.setWidth(10)
-
-        # Pixels for the selection circle to be bigger than the bot.
-        offset = BOT_DIAMETER * 0.3
-
-        selector_ellipse = QGraphicsEllipseItem(-((BOT_DIAMETER/2)+offset/2), -((BOT_DIAMETER/2)+offset/2), BOT_DIAMETER + offset, BOT_DIAMETER + offset)
-        selector_ellipse.setPen(selection_pen)
-        selector_ellipse.setVisible(False)
-        bot.addToGroup(selector_ellipse)
-
-        return (bot, rotator, selector_ellipse)
-
-        #id_text = self.scene.addText(str(bot.id), self.font)
-        #id_text.setPos(bot.pos.x - BOT_DIAMETER*0.2, -(bot.pos.y - BOT_DIAMETER*0.5))
+    # # Creates a QGraphicsItemGroup that represents a robot.
+    # # Takes an integer as bot id.
+    # # Takes a QColor to color the bot with.
+    # # `is_selectable` determines whether the robot is selectable with the mouse.
+    # # Returns (QGraphicsItemGroup, QGraphicsEllipseItem)
+    # # Returns the QGraphicsItemGroup representing the bot
+    # # plus the QGraphicsEllipse used for indicating the bot is selected.
+    # def create_new_robot(self, bot_id, color, is_selectable):
+    #     bot = QGraphicsItemGroup()
+    #     # Part of the bot that should rotate.
+    #     rotator = QGraphicsItemGroup()
+    #     bot.addToGroup(rotator)
+    #
+    #     # Make the bot selectable.
+    #     bot.setFlag(QtWidgets.QGraphicsItem.ItemIsSelectable, is_selectable)
+    #
+    #     ellipse = QGraphicsEllipseItem(-BOT_DIAMETER/2, -BOT_DIAMETER/2, BOT_DIAMETER, BOT_DIAMETER)
+    #     ellipse.setBrush(QtGui.QBrush(color))
+    #     rotator.addToGroup(ellipse)
+    #
+    #     line_pen = QtGui.QPen()
+    #     line_pen.setWidth(10)
+    #     rot_line = QGraphicsLineItem(0, 0, BOT_DIAMETER/2, 0)
+    #     rot_line.setPen(line_pen)
+    #     rotator.addToGroup(rot_line)
+    #
+    #     id_text = QGraphicsTextItem(str(bot_id))
+    #     id_text.setFont(self.font)
+    #     id_text.setPos(-BOT_DIAMETER/3,-BOT_DIAMETER/2)
+    #     bot.addToGroup(id_text)
+    #
+    #     selection_pen = QtGui.QPen(QtGui.QColor(0, 255, 255))
+    #     selection_pen.setWidth(10)
+    #
+    #     # Pixels for the selection circle to be bigger than the bot.
+    #     offset = BOT_DIAMETER * 0.3
+    #
+    #     selector_ellipse = QGraphicsEllipseItem(-((BOT_DIAMETER/2)+offset/2), -((BOT_DIAMETER/2)+offset/2), BOT_DIAMETER + offset, BOT_DIAMETER + offset)
+    #     selector_ellipse.setPen(selection_pen)
+    #     selector_ellipse.setVisible(False)
+    #     bot.addToGroup(selector_ellipse)
+    #
+    #     return (bot, rotator, selector_ellipse)
+    #
+    #     #id_text = self.scene.addText(str(bot.id), self.font)
+    #     #id_text.setPos(bot.pos.x - BOT_DIAMETER*0.2, -(bot.pos.y - BOT_DIAMETER*0.5))
