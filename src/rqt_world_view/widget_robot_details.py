@@ -1,5 +1,5 @@
-from python_qt_binding.QtWidgets import QFrame, QVBoxLayout, QLabel
-from python_qt_binding.QtCore import pyqtSignal
+from python_qt_binding.QtWidgets import QFrame, QGridLayout, QLabel
+from python_qt_binding.QtCore import pyqtSignal, Qt
 
 
 class WidgetRobotDetails(QFrame):
@@ -13,15 +13,33 @@ class WidgetRobotDetails(QFrame):
         self.bot_id = bot_id
         self.is_selected = False
 
-        # Add the vertical layout.
-        self.setLayout(QVBoxLayout())
-        self.setFrameStyle(QFrame.Panel | QFrame.Raised)
+        # Configure the frame appearance.
+        self.setLayout(QGridLayout())
+        self.set_selected_state(self.is_selected)
 
         # Bot id label.
-        self.id_label = QLabel(str(self.bot_id))
-        self.layout().addWidget(self.id_label)
+        self.id_label = QLabel("<p style=\"font-weight:600\">" + \
+                                str(self.bot_id) + "</p>")
+        self.id_label.setTextFormat(Qt.RichText)
+        self.layout().addWidget(self.id_label, 0, 0)
+
+        # Position labels.
+        self.xpos_label = QLabel(str(0.0))
+        self.layout().addWidget(QLabel("x: "), 1, 0)
+        self.layout().addWidget(self.xpos_label, 1, 1)
+        self.ypos_label = QLabel(str(0.0))
+        self.layout().addWidget(QLabel("y: "), 2, 0)
+        self.layout().addWidget(self.ypos_label, 2, 1)
 
 
+    # Update the info on display using a bot message.
+    def update_display(self, bot_msg):
+        self.xpos_label.setText(str("%.2f" % bot_msg.pos.x))
+        self.ypos_label.setText(str("%.2f" % bot_msg.pos.y))
+
+
+    # Sets the selection state of the frame.
+    # Then calls `set_selected_appearance`.
     def set_selected_state(self, is_selected):
         self.is_selected = is_selected
         self.set_selected_appearance(is_selected)

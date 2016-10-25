@@ -219,6 +219,9 @@ class WorldViewPlugin(Plugin):
             self.robots_us_graphic[bot.id].setPos(m_to_mm(bot.pos.x), -m_to_mm(bot.pos.y))
             self.robots_us_graphic[bot.id].rotate_to(-math.degrees(bot.angle))
 
+            # Update the sidebar.
+            self.robots_us_sidebar[bot.id].update_display(bot)
+
         # Process the them bots.
         for bot in message.them:
             if not bot.id in self.robots_them:
