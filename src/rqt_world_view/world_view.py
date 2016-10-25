@@ -213,6 +213,9 @@ class WorldViewPlugin(Plugin):
                 self.robots_us_sidebar[bot.id] = WidgetRobotDetails(bot.id)
                 self.widget.l_side_layout.addWidget(self.robots_us_sidebar[bot.id])
 
+                # Connect the list items `change_bot_selection` signal.
+                self.robots_us_sidebar[bot.id].change_bot_selection.connect(self.slot_change_robot_selected_state)
+
             self.robots_us_graphic[bot.id].setPos(m_to_mm(bot.pos.x), -m_to_mm(bot.pos.y))
             self.robots_us_graphic[bot.id].rotate_to(-math.degrees(bot.angle))
 
@@ -266,6 +269,9 @@ class WorldViewPlugin(Plugin):
             if bot.isSelected():
                 self.robots_us_selected.append(bot_id)
 
+            # Update the sidebar.
+            self.robots_us_sidebar[bot_id].set_selected_state(bot.isSelected())
+
 
     # Called when the view is right clicked.
     def slot_view_right_clicked(self, event):
@@ -290,6 +296,13 @@ class WorldViewPlugin(Plugin):
 # ------------------------------------------------------------------------------
 # ---------- Button slots ------------------------------------------------------
 # ------------------------------------------------------------------------------
+
+    # Changes the selection state of a single robot.
+    # bot_id: integer => The id of the bot.
+    # selected: bool => Whether the robot should be selected or not.
+    def slot_change_robot_selected_state(self, bot_id, selected):
+        if bot_id in self.robots_us_graphic:
+            self.robots_us_graphic[bot_id].setSelected(selected)
 
     # Called when the select all button is clicked.
     def slot_select_all_button(self):
