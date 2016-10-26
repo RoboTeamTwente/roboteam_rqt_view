@@ -23,6 +23,7 @@ from widget_robot_details import WidgetRobotDetails
 
 
 BOT_DIAMETER = 180 # Diameter of the bots in mm.
+BALL_DIAMETER = 50
 
 
 # Converts to mm.
@@ -52,7 +53,7 @@ class WorldViewPlugin(Plugin):
     robots_us_selected = []
     robots_them_selected = []
 
-    ball = QGraphicsEllipseItem(0, 0, 50, 50)
+    ball = QGraphicsEllipseItem(0, 0, BALL_DIAMETER, BALL_DIAMETER)
 
     field_lines = QGraphicsItemGroup()
 
@@ -200,7 +201,7 @@ class WorldViewPlugin(Plugin):
     # Receives the changeUI(PyQt_PyObject) signal which gets sent when a message arrives at 'message_callback'.
     def slot_worldstate(self, message):
         # Move the ball.
-        self.ball.setPos(m_to_mm(message.ball.pos.x), -(m_to_mm(message.ball.pos.y)))
+        self.ball.setPos(m_to_mm(message.ball.pos.x) - BALL_DIAMETER/2, -(m_to_mm(message.ball.pos.y) - BALL_DIAMETER/2))
 
         # Process the us bots.
         for bot in message.us:
@@ -243,7 +244,7 @@ class WorldViewPlugin(Plugin):
         self.field_length = m_to_mm(message.field.field_length)
 
         # Resize the field background.
-        self.field_background.setRect(-self.field_width/2, -self.field_length/2, self.field_width, self.field_length)
+        self.field_background.setRect(-self.field_length/2, -self.field_width/2, self.field_length, self.field_width)
 
         # Remove all field lines.
         for item in self.field_lines.childItems():
