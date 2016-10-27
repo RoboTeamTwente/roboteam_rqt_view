@@ -20,6 +20,7 @@ from field_graphics_view import FieldGraphicsView
 from field_graphics_scene import FieldGraphicsScene
 from graphics_robot import GraphicsRobot
 from widget_robot_details import WidgetRobotDetails
+from qgraphics_arc_item import QGraphicsArcItem
 
 
 BOT_DIAMETER = 180 # Diameter of the bots in mm.
@@ -243,6 +244,9 @@ class WorldViewPlugin(Plugin):
         self.field_width = m_to_mm(message.field.field_width)
         self.field_length = m_to_mm(message.field.field_length)
 
+        rospy.loginfo("Field width: %i", self.field_width)
+        rospy.loginfo("Field length: %i", self.field_length)
+
         # Resize the field background.
         self.field_background.setRect(-self.field_length/2, -self.field_width/2, self.field_length, self.field_width)
 
@@ -254,14 +258,28 @@ class WorldViewPlugin(Plugin):
         print message.field.field_lines
 
         for msg_line in message.field.field_lines:
-            print "Line!"
+            line_pen = QtGui.QPen()
+            line_pen.setWidth(m_to_mm(msg_line.thickness))
+
             line = QGraphicsLineItem(
-                m_to_mm(msg_line.x_begin), m_to_mm(msg_line.y_begin),
-                m_to_mm(msg_line.x_end), m_to_mm(msg_line.y_end))
+                m_to_mm(msg_line.x_begin), -m_to_mm(msg_line.y_begin),
+                m_to_mm(msg_line.x_end), -m_to_mm(msg_line.y_end))
+            line.setPen(line_pen)
             self.field_lines.addToGroup(line)
 
-        rospy.loginfo("Field width: %i", self.field_width)
-        rospy.loginfo("Field length: %i", self.field_length)
+        print message.field.field_arcs
+
+        for msg_arc in message.field.field_arcs:
+            line_pen = QtGui.QPen()
+            line_pen.setWidth(m_to_mm(msg_line.thickness))
+
+            arc = QGraphicsArcItem(
+                m_to_mm(msg_arc.x_center - msg_arc.radius), -m_to_mm(msg_arc.y_center - msg_arc.radius),
+                m_to_mm(msg_arc.radius)*2, -m_to_mm(msg_arc.radius)*2)
+            arc.setStartAngle(math.degrees(msg_arc.a1)*16)
+            arc.setSpanAngle(math.degrees(msg_arc.a2 - msg_arc.a1)*16)
+            arc.setPen(line_pen)
+            self.field_lines.addToGroup(arc)
 
 
     # Slot for the scenes selectionChanged signal.
