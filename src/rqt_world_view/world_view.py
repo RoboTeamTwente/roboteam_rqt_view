@@ -27,6 +27,15 @@ BOT_DIAMETER = 180 # Diameter of the bots in mm.
 BALL_DIAMETER = 50
 
 
+# Size of the area around the field in mm.
+FIELD_RUNOUT_ZONE = 300
+
+
+FIELD_COLOR = QtGui.QColor(0, 200, 50)
+FIELD_LINE_COLOR = QtGui.QColor(255, 255, 255)
+BALL_COLOR = QtGui.QColor(255, 100, 0)
+
+
 # Converts to mm.
 def m_to_mm(meters):
     return meters * 1000.0
@@ -57,6 +66,8 @@ class WorldViewPlugin(Plugin):
     ball = QGraphicsEllipseItem(0, 0, BALL_DIAMETER, BALL_DIAMETER)
 
     field_lines = QGraphicsItemGroup()
+
+    goals = QGraphicsItemGroup()
 
 
     # Field size in mm.
@@ -132,15 +143,17 @@ class WorldViewPlugin(Plugin):
 
         # Add the field to the scene.
         self.scene.addItem(self.field_background)
-        self.field_background.setBrush(QtGui.QBrush(QtGui.QColor(0, 200, 50)))
+        self.field_background.setBrush(QtGui.QBrush(FIELD_COLOR))
 
         # Add the field lines.
         self.scene.addItem(self.field_lines)
 
+        # Add the goals.
+        self.scene.addItem(self.goals)
+
         # Add the ball to the scene.
         self.scene.addItem(self.ball)
-        # Ball = orange.
-        self.ball.setBrush(QtGui.QBrush(QtGui.QColor(255, 100, 0)))
+        self.ball.setBrush(QtGui.QBrush(BALL_COLOR))
 
         # Scale the scene so that it fits into the view area.
         self.fieldview.fitInView(self.scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
@@ -248,17 +261,25 @@ class WorldViewPlugin(Plugin):
         rospy.loginfo("Field length: %i", self.field_length)
 
         # Resize the field background.
-        self.field_background.setRect(-self.field_length/2, -self.field_width/2, self.field_length, self.field_width)
+        self.field_background.setRect(
+            -(self.field_length/2 + FIELD_RUNOUT_ZONE), -(self.field_width/2 + FIELD_RUNOUT_ZONE),
+            self.field_length + FIELD_RUNOUT_ZONE * 2, self.field_width + FIELD_RUNOUT_ZONE * 2)
 
         # Remove all field lines.
         for item in self.field_lines.childItems():
             self.field_lines.removeFromGroup(item)
             del item
 
-        print message.field.field_lines
+        # Remove all goals.
+        for item in self.goals.childItems():
+            self.goals.removeFromGroup(item)
+            del item
 
+
+        # Add all the lines.
         for msg_line in message.field.field_lines:
             line_pen = QtGui.QPen()
+            line_pen.setColor(FIELD_LINE_COLOR)
             line_pen.setWidth(m_to_mm(msg_line.thickness))
 
             line = QGraphicsLineItem(
@@ -267,10 +288,10 @@ class WorldViewPlugin(Plugin):
             line.setPen(line_pen)
             self.field_lines.addToGroup(line)
 
-        print message.field.field_arcs
-
+        # Add all the arcs.
         for msg_arc in message.field.field_arcs:
             line_pen = QtGui.QPen()
+            line_pen.setColor(FIELD_LINE_COLOR)
             line_pen.setWidth(m_to_mm(msg_line.thickness))
 
             arc = QGraphicsArcItem(
@@ -280,6 +301,59 @@ class WorldViewPlugin(Plugin):
             arc.setSpanAngle(math.degrees(msg_arc.a2 - msg_arc.a1)*16)
             arc.setPen(line_pen)
             self.field_lines.addToGroup(arc)
+
+        # Create the goals.
+        goal_width = m_to_mm(message.field.goal_width)
+        goal_depth = m_to_mm(message.field.goal_depth)
+
+        rospy.loginfo("Goal width: %i", goal_width)
+        rospy.loginfo("Goal depth: %i", goal_depth)
+
+        goal_x_from_center = self.field_height/2 + goal_depth
+        goal_y_from_center = goal_width/2
+
+        goal_pen = QtGui.QPen()
+        goal_pen.setWidth(goal_depth / 20)
+
+        # Left goal.
+
+        back_line = QGraphicsLineItem(
+            -goal_x_from_center, goal_y_from_center,
+            -goal_x_from_center, -goal_y_from_center)
+        back_line.setPen(goal_pen)
+        self.goals.addToGroup(back_line)
+
+        top_line = QGraphicsLineItem(
+            -goal_x_from_center, goal_y_from_center,
+            -self.field_height/2, goal_y_from_center)
+        top_line.setPen(goal_pen)
+        self.goals.addToGroup(top_line)
+
+        bottom_line = QGraphicsLineItem(
+            -goal_x_from_center, -goal_y_from_center,
+            -self.field_height/2, -goal_y_from_center)
+        bottom_line.setPen(goal_pen)
+        self.goals.addToGroup(bottom_line)
+
+        # Right goal.
+
+        back_line = QGraphicsLineItem(
+            goal_x_from_center, goal_y_from_center,
+            goal_x_from_center, -goal_y_from_center)
+        back_line.setPen(goal_pen)
+        self.goals.addToGroup(back_line)
+
+        top_line = QGraphicsLineItem(
+            goal_x_from_center, goal_y_from_center,
+            self.field_height/2, goal_y_from_center)
+        top_line.setPen(goal_pen)
+        self.goals.addToGroup(top_line)
+
+        bottom_line = QGraphicsLineItem(
+            goal_x_from_center, -goal_y_from_center,
+            self.field_height/2, -goal_y_from_center)
+        bottom_line.setPen(goal_pen)
+        self.goals.addToGroup(bottom_line)
 
 
     # Slot for the scenes selectionChanged signal.
