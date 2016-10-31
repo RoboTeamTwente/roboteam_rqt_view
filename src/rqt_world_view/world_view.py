@@ -23,6 +23,7 @@ from items.graphics_robot import GraphicsRobot
 from items.widget_robot_details import WidgetRobotDetails
 from items.qgraphics_arc_item import QGraphicsArcItem
 from items.widget_scoreboard import WidgetScoreboard
+from items.widget_blackboard import WidgetBlackboard
 
 
 BOT_DIAMETER = 180 # Diameter of the bots in mm.
@@ -176,6 +177,13 @@ class WorldViewPlugin(Plugin):
 
         # ---- /Score board ----
 
+        # ---- Blackboard ----
+
+        self.blackboard = WidgetBlackboard()
+        self.widget.l_side_layout.layout().addWidget(self.blackboard)
+
+        # ---- /Blackboard ----
+
         self.font = QtGui.QFont()
         self.font.setPixelSize(BOT_DIAMETER*0.8)
 
@@ -257,7 +265,7 @@ class WorldViewPlugin(Plugin):
 
                 # Create a list item for this robot.
                 self.robots_us_sidebar[bot.id] = WidgetRobotDetails(bot.id)
-                self.widget.l_side_layout.addWidget(self.robots_us_sidebar[bot.id])
+                self.widget.l_robotlist_layout.addWidget(self.robots_us_sidebar[bot.id])
 
                 # Connect the list items `change_bot_selection` signal.
                 self.robots_us_sidebar[bot.id].change_bot_selection.connect(self.slot_change_robot_selected_state)

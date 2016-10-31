@@ -51,9 +51,9 @@
      <item>
       <layout class="QHBoxLayout" name="l_main_layout">
        <item>
-        <layout class="QVBoxLayout" name="verticalLayout">
+        <layout class="QVBoxLayout" name="l_side_layout">
          <item>
-          <layout class="QVBoxLayout" name="l_side_layout"/>
+          <layout class="QVBoxLayout" name="l_robotlist_layout"/>
          </item>
          <item>
           <spacer name="verticalSpacer">
