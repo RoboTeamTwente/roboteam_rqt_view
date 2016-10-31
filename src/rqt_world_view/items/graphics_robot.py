@@ -4,9 +4,6 @@ from python_qt_binding.QtWidgets import QGraphicsWidget, QGraphicsItem, QGraphic
 
 BOT_DIAMETER = 180 # Diameter of the bots in mm.
 
-US_COLOR = QtGui.QColor(255, 50, 50); # The color of our robots.
-THEM_COLOR = QtGui.QColor(255, 255, 0); # The color of the opponents robots.
-
 
 class GraphicsRobot(QGraphicsItemGroup):
 
@@ -15,8 +12,9 @@ class GraphicsRobot(QGraphicsItemGroup):
     # is_us: boolean -> Determines whether this robot belongs to our team.
     #   If it does, it's color is red and it will be selectable.
     #   Otherwhise it will be yellow and not selectable.
+    # color: QColor() -> The color to use for the robot body.
     # font: QFont() -> The font to use to draw the id with.
-    def __init__(self, bot_id, is_us, font):
+    def __init__(self, bot_id, is_us, color, font):
         super(GraphicsRobot, self).__init__()
 
         self.bot_id = bot_id
@@ -28,11 +26,8 @@ class GraphicsRobot(QGraphicsItemGroup):
         self.addToGroup(self.rotator)
 
         if is_us:
-            color = US_COLOR
             # Make the bot selectable.
             self.setFlag(QGraphicsItem.ItemIsSelectable, True)
-        else:
-            color = THEM_COLOR
 
         # Main robot body.
         ellipse = QGraphicsEllipseItem(-BOT_DIAMETER/2, -BOT_DIAMETER/2, BOT_DIAMETER, BOT_DIAMETER)

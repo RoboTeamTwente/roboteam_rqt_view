@@ -14,13 +14,15 @@ from python_qt_binding.QtWidgets import QWidget, QLabel, QGraphicsScene, QGraphi
 
 from roboteam_msgs.msg import World as WorldMessage
 from roboteam_msgs.msg import GeometryData as GeometryMessage
+from roboteam_msgs.msg import RefereeData as RefboxMessage
 from roboteam_msgs.msg import SteeringAction, SteeringGoal
 
-from field_graphics_view import FieldGraphicsView
-from field_graphics_scene import FieldGraphicsScene
-from graphics_robot import GraphicsRobot
-from widget_robot_details import WidgetRobotDetails
-from qgraphics_arc_item import QGraphicsArcItem
+from items.field_graphics_view import FieldGraphicsView
+from items.field_graphics_scene import FieldGraphicsScene
+from items.graphics_robot import GraphicsRobot
+from items.widget_robot_details import WidgetRobotDetails
+from items.qgraphics_arc_item import QGraphicsArcItem
+from items.widget_scoreboard import WidgetScoreboard
 
 
 BOT_DIAMETER = 180 # Diameter of the bots in mm.
@@ -35,6 +37,8 @@ FIELD_COLOR = QtGui.QColor(0, 200, 50)
 FIELD_LINE_COLOR = QtGui.QColor(255, 255, 255)
 BALL_COLOR = QtGui.QColor(255, 100, 0)
 
+US_COLOR = QtGui.QColor(255, 50, 50); # The color of our robots.
+THEM_COLOR = QtGui.QColor(127, 84, 147); # The color of the opponents robots.
 
 # Converts to mm.
 def m_to_mm(meters):
@@ -51,6 +55,7 @@ class WorldViewPlugin(Plugin):
     worldstate_signal = pyqtSignal(WorldMessage)
     # Qt signal for when the graphics calibration changes.
     geometry_signal = pyqtSignal(GeometryMessage)
+    referee_signal = pyqtSignal(RefboxMessage)
 
     # Graphic representations of the us and them robots.
     # QGraphicsItemGroup.
@@ -122,6 +127,9 @@ class WorldViewPlugin(Plugin):
         # Subscribe to the geometry information.
         self.geometry_sub = rospy.Subscriber("vision_geometry", GeometryMessage, self.callback_geometry)
 
+        # Subscribe to the referee information.
+        self.referee_sub = rospy.Subscriber("vision_refbox", RefboxMessage, self.callback_referee)
+
         # Create the steering action client.
         self.client = actionlib.SimpleActionClient("steering", SteeringAction)
 
@@ -160,6 +168,14 @@ class WorldViewPlugin(Plugin):
 
         # ---- /Field view initialization ----
 
+        # ---- Score board ----
+
+        self.scoreboard = WidgetScoreboard(US_COLOR, THEM_COLOR)
+        # Insert it all the way at the top.
+        self.widget.l_toolbar_layout.layout().insertWidget(0, self.scoreboard)
+
+        # ---- /Score board ----
+
         self.font = QtGui.QFont()
         self.font.setPixelSize(BOT_DIAMETER*0.8)
 
@@ -169,6 +185,7 @@ class WorldViewPlugin(Plugin):
         self.worldstate_signal.connect(self.slot_worldstate)
         # Connect the Geometry callback to the Geometry slot.
         self.geometry_signal.connect(self.slot_geometry)
+        self.referee_signal.connect(self.slot_referee)
 
         # Connect the scene's selectionChanged signal.
         self.scene.selectionChanged.connect(self.slot_selection_changed)
@@ -212,6 +229,20 @@ class WorldViewPlugin(Plugin):
         self.worldstate_signal.emit(message)
 
 
+    def callback_referee(self, message):
+        self.referee_signal.emit(message)
+
+
+    def callback_geometry(self, message):
+        # Send signal to qt thread.
+        self.geometry_signal.emit(message)
+
+
+# ------------------------------------------------------------------------------
+# ---------- Gui change slots --------------------------------------------------
+# ------------------------------------------------------------------------------
+
+
     # Receives the changeUI(PyQt_PyObject) signal which gets sent when a message arrives at 'message_callback'.
     def slot_worldstate(self, message):
         # Move the ball.
@@ -221,7 +252,7 @@ class WorldViewPlugin(Plugin):
         for bot in message.us:
             if not bot.id in self.robots_us_graphic:
                 # Create a graphics item for this robot.
-                self.robots_us_graphic[bot.id] = GraphicsRobot(bot.id, True, self.font)
+                self.robots_us_graphic[bot.id] = GraphicsRobot(bot.id, True, US_COLOR, self.font)
                 self.scene.addItem(self.robots_us_graphic[bot.id])
 
                 # Create a list item for this robot.
@@ -240,17 +271,11 @@ class WorldViewPlugin(Plugin):
         # Process the them bots.
         for bot in message.them:
             if not bot.id in self.robots_them:
-                self.robots_them[bot.id] = GraphicsRobot(bot.id, False, self.font)
+                self.robots_them[bot.id] = GraphicsRobot(bot.id, False, THEM_COLOR, self.font)
                 self.scene.addItem(self.robots_them[bot.id])
 
             self.robots_them[bot.id].setPos(m_to_mm(bot.pos.x), -m_to_mm(bot.pos.y))
             self.robots_them[bot.id].rotate_to(-math.degrees(bot.angle))
-
-
-
-    def callback_geometry(self, message):
-        # Send signal to qt thread.
-        self.geometry_signal.emit(message)
 
 
     def slot_geometry(self, message):
@@ -354,6 +379,10 @@ class WorldViewPlugin(Plugin):
             self.field_height/2, -goal_y_from_center)
         bottom_line.setPen(goal_pen)
         self.goals.addToGroup(bottom_line)
+
+
+    def slot_referee(self, message):
+        self.scoreboard.update_with_message(message)
 
 
     # Slot for the scenes selectionChanged signal.
