@@ -18,7 +18,7 @@
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout">
    <item>
-    <layout class="QVBoxLayout" name="l_wrapper_layout" stretch="0,1">
+    <layout class="QVBoxLayout" name="l_wrapper_layout">
      <item>
       <layout class="QVBoxLayout" name="l_toolbar_layout">
        <item>
@@ -49,11 +49,8 @@
       </layout>
      </item>
      <item>
-      <widget class="QSplitter" name="s_main_splitter">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <widget class="QFrame" name="frame_143">
+      <layout class="QHBoxLayout" name="l_main_layout">
+       <item>
         <layout class="QVBoxLayout" name="l_side_layout">
          <item>
           <layout class="QVBoxLayout" name="l_robotlist_layout"/>
@@ -72,8 +69,8 @@
           </spacer>
          </item>
         </layout>
-       </widget>
-      </widget>
+       </item>
+      </layout>
      </item>
     </layout>
    </item>

@@ -144,7 +144,7 @@ class WorldViewPlugin(Plugin):
         self.fieldview.setRenderHints(QtGui.QPainter.Antialiasing)
 
         # Add to the main window.
-        self.widget.l_main_layout.layout().addWidget(self.fieldview)
+        self.widget.s_main_splitter.addWidget(self.fieldview)
 
         #self.fieldview.setDragMode(FieldGraphicsView.RubberBandDrag)
 
@@ -181,6 +181,7 @@ class WorldViewPlugin(Plugin):
 
         self.blackboard = WidgetBlackboard()
         self.widget.l_side_layout.layout().addWidget(self.blackboard)
+
 
         # ---- /Blackboard ----
 
