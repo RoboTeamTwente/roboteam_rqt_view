@@ -12,15 +12,15 @@ class WidgetBlackboard(QFrame):
 
         self.setLayout(QGridLayout())
 
+        self.setSizePolicy(self.sizePolicy().Preferred, self.sizePolicy().Fixed)
+
+        self.layout().addWidget(QLabel("Blackboard"), 0, 0)
+
         # ---- Add item button ----
         self.add_item_button = QPushButton("Add value")
-        self.layout().addWidget(self.add_item_button, 0, 0, 1, 2)
+        self.layout().addWidget(self.add_item_button, 0, 1, 1, 3)
         self.add_item_button.clicked.connect(self.slot_add_item)
         # ---- /Add item button ----
-
-        self.test_button = QPushButton("Test!")
-        self.layout().addWidget(self.test_button, 0, 2, 1, 2)
-        self.test_button.clicked.connect(self.slot_test_button)
 
         # ---- Setup table ----
 
@@ -90,16 +90,11 @@ class WidgetBlackboard(QFrame):
         item.name_widget.deleteLater()
         item.name_widget = None
         item.value_widget.deleteLater()
-        item.value_widget = Noneself.name_widget = QLineEdit()
-        self.remove_widget = QPushButton("x")
+        item.value_widget = None
         item.remove_widget.deleteLater()
         item.remove_widget = None
 
         del self.blackboard_items[item_id]
-
-    def slot_test_button(self):
-        print "------------------------------"
-        print self.get_blackboard_message()
 
 
 class BlackboardItem():
@@ -121,7 +116,7 @@ class BlackboardItem():
 
         self.value_widget = QStackedWidget()
         self.value_widget.setMinimumSize(20, 0)
-        self.value_widget.setSizePolicy(1, 0)
+        self.value_widget.setSizePolicy(self.value_widget.sizePolicy().Minimum, self.value_widget.sizePolicy().Fixed)
 
         # String input.
         self.string_edit = QLineEdit()

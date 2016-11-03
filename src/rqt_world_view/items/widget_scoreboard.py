@@ -21,6 +21,8 @@ class WidgetScoreboard(QFrame):
 
         # ---- Layout ----
 
+        self.setSizePolicy(self.sizePolicy().Minimum, self.sizePolicy().Fixed)
+
         self.layout().addWidget(self.us_info, 0, 0, 1, 2)
         self.layout().addWidget(self.them_info, 0, 2, 1, 2)
 
@@ -46,6 +48,7 @@ class WidgetTeamInfo(QFrame):
     def __init__(self, color):
         super(WidgetTeamInfo, self).__init__()
 
+        self.setSizePolicy(self.sizePolicy().Minimum, self.sizePolicy().Fixed)
         self.setLayout(QGridLayout())
 
         self.setObjectName("score")
