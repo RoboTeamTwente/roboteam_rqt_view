@@ -48,18 +48,35 @@ class WidgetBlackboard(QFrame):
         for item_id, item in self.blackboard_items.iteritems():
             entry = item.get_entry_message()
 
-            print type(entry)
+            # Only add items that have a name.
+            if entry.name != "":
 
-            if type(entry) is msg.BoolEntry:
-                message.bools.append(entry)
-            elif type(entry) is msg.StringEntry:
-                message.strings.append(entry)
-            elif type(entry) is msg.Float64Entry:
-                message.doubles.append(entry)
-            elif type(entry) is msg.Int32Entry:
-                message.ints.append(entry)
+                if type(entry) is msg.BoolEntry:
+                    message.bools.append(entry)
+                elif type(entry) is msg.StringEntry:
+                    message.strings.append(entry)
+                elif type(entry) is msg.Float64Entry:
+                    message.doubles.append(entry)
+                elif type(entry) is msg.Int32Entry:
+                    message.ints.append(entry)
 
         return message
+
+
+    # Returns the blackboard in a way usable by the "TestX" program.
+    # Returns a list of blackboard entries.
+    # The entry format is as follows: "type:name=value"
+    def get_blackboard_testx(self):
+        blackboard = []
+        for item_id, item in self.blackboard_items.iteritems():
+            entry = item.get_entry_testx()
+
+            # Only append non-empty entries.
+            if entry != "":
+                blackboard.append(entry)
+
+        return blackboard
+
 
     # Adds a new blackboard item.
     def slot_add_item(self):
@@ -95,6 +112,7 @@ class WidgetBlackboard(QFrame):
         item.remove_widget = None
 
         del self.blackboard_items[item_id]
+
 
 
 class BlackboardItem():
@@ -183,6 +201,52 @@ class BlackboardItem():
             item.name = self.name_widget.text()
             item.value = self.bool_edit.isChecked()
             return item
+
+
+    # Returns the blackboard entry in a way usable by the "TestX" program.
+    # The format is as follows: "type:name=value"
+    # Returns an empty string if the entry has no name.
+    def get_entry_testx(self):
+        # Maps selectable types to their "TestX" name.
+        # Currently it is only lowercasing, but there is no
+        # guarantee it stays that way. Hence the dict.
+        type_mapping = {
+            "String": "string",
+            "Int": "int",
+            "Double": "double",
+            "Bool": "bool"
+        }
+
+        typestring = type_mapping.get(self.type_widget.currentText(), "")
+
+        if typestring != "":
+            name = self.name_widget.text()
+
+            # If there is no name, return an empty string.
+            if name == "":
+                return ""
+
+            value = ""
+            if typestring == "string":
+                value = "\"" + self.string_edit.text() + "\""
+            elif typestring == "int":
+                try:
+                    value = int(self.int_edit.text())
+                except ValueError, e:
+                    value = 0
+            elif typestring == "double":
+                try:
+                    value = float(self.double_edit.text())
+                except ValueError, e:
+                    value = 0
+            elif typestring == "bool":
+                if self.bool_edit.isChecked():
+                    value = "true"
+                else:
+                    value = "false"
+
+            return typestring + ":" + name + "=" + str(value)
+
 
 
     def slot_remove_widget_pressed(self):

@@ -89,7 +89,6 @@ class WidgetWorldView(QFrame):
     # This includes robot and ball positions.
     # Expects a DetectionFrame message.
     def update_world_state(self, message):
-        print message
         # Move the ball.
         self.ball.setPos(utils.m_to_mm(message.ball.pos.x) - BALL_DIAMETER/2, -(utils.m_to_mm(message.ball.pos.y) - BALL_DIAMETER/2))
 

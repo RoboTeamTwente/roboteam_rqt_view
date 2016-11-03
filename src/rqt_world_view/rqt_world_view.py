@@ -125,6 +125,7 @@ class WorldViewPlugin(Plugin):
         self.sidebar = QtWidgets.QFrame()
         self.sidebar.setSizePolicy(self.sidebar.sizePolicy().Preferred, self.sidebar.sizePolicy().Expanding)
         self.sidebar.setLayout(QtWidgets.QVBoxLayout())
+        self.sidebar.layout().setContentsMargins(0, 0, 0, 0)
         self.horizontal_splitter.addWidget(self.sidebar)
 
         self.skill_tester = WidgetSkillTester()
@@ -148,7 +149,6 @@ class WorldViewPlugin(Plugin):
     def shutdown_plugin(self):
         # TODO unregister all publishers here
         self.worldstate_sub.unregister()
-        pass
 
     def save_settings(self, plugin_settings, instance_settings):
         # TODO save intrinsic configuration, usually using:
