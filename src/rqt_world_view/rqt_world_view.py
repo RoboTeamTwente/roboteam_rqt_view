@@ -154,7 +154,7 @@ class WorldViewPlugin(Plugin):
 
     def shutdown_plugin(self):
         # TODO unregister all publishers here
-        self.worldstate_sub.unregister()
+        self.strategy_ignore_topic.unregister()
 
     def save_settings(self, plugin_settings, instance_settings):
         # TODO save intrinsic configuration, usually using:
