@@ -16,6 +16,7 @@ from items.widget_robot_details import WidgetRobotDetails
 from items.widget_world_view import WidgetWorldView
 from items.widget_scoreboard import WidgetScoreboard
 from items.widget_skill_tester import WidgetSkillTester
+from items.widget_multi_skill_tester import WidgetMultiSkillTester
 
 
 # Size of the area around the field in mm.
@@ -133,10 +134,10 @@ class WorldViewPlugin(Plugin):
         self.sidebar.layout().setContentsMargins(0, 0, 0, 0)
         self.horizontal_splitter.addWidget(self.sidebar)
 
-        self.skill_tester = WidgetSkillTester(self.strategy_ignore_topic)
-        self.sidebar.layout().addWidget(self.skill_tester)
+        self.multi_skill_tester = WidgetMultiSkillTester(self.strategy_ignore_topic)
+        self.sidebar.layout().addWidget(self.multi_skill_tester)
 
-        self.sidebar.layout().addStretch(1)
+        #self.sidebar.layout().addStretch(1)
 
         # ---- /Sidebar ----
 

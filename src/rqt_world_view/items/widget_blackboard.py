@@ -151,13 +151,13 @@ class BlackboardItem():
 
         # Double input.
         self.double_edit = QLineEdit()
-        self.double_validator = QDoubleValidator()
+        self.double_validator = QRegExpValidator(QRegExp("-?[0-9]*.?[0-9]*"))
         self.double_edit.setValidator(self.double_validator)
         self.value_widget.addWidget(self.double_edit)
 
         # Integer input.
         self.int_edit = QLineEdit()
-        self.int_validator = QRegExpValidator(QRegExp("[0-9]+"))
+        self.int_validator = QRegExpValidator(QRegExp("-?[0-9]+"))
         self.int_edit.setValidator(self.int_validator)
         self.value_widget.addWidget(self.int_edit)
 

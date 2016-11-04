@@ -100,10 +100,23 @@ class WidgetSkillTester(QtWidgets.QFrame):
     # Stops the process when it is running.
     def toggle_testing_process(self):
         if self.is_test_running():
+            self.stop_test()
+        else:
+            self.start_test()
+
+
+    # Stops the test when it's running.
+    def stop_test(self):
+        print "Stop test!"
+        if self.is_test_running():
             # Ask the testx thread to stop.
             self.testx_thread.stop()
             self.test_button.setText("Stopping...")
-        else:
+
+
+    # Starts the test. Only when the test isn't already running.
+    def start_test(self):
+        if not self.is_test_running():
             # Construct the rosrun TestX command.
             command = [ROSRUN, TESTX_PACKAGE, TESTX_COMMAND]
             skill = str(self.skill_entry.text())
