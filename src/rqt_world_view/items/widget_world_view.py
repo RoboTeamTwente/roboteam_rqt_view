@@ -165,7 +165,7 @@ class WidgetWorldView(QFrame):
         goal_width = utils.m_to_mm(message.field.goal_width)
         goal_depth = utils.m_to_mm(message.field.goal_depth)
 
-        goal_x_from_center = self.field_height/2 + goal_depth
+        goal_x_from_center = self.field_length/2 + goal_depth
         goal_y_from_center = goal_width/2
 
         goal_pen = QtGui.QPen()
@@ -181,13 +181,13 @@ class WidgetWorldView(QFrame):
 
         top_line = QGraphicsLineItem(
             -goal_x_from_center, goal_y_from_center,
-            -self.field_height/2, goal_y_from_center)
+            -self.field_length/2, goal_y_from_center)
         top_line.setPen(goal_pen)
         self.goals.addToGroup(top_line)
 
         bottom_line = QGraphicsLineItem(
             -goal_x_from_center, -goal_y_from_center,
-            -self.field_height/2, -goal_y_from_center)
+            -self.field_length/2, -goal_y_from_center)
         bottom_line.setPen(goal_pen)
         self.goals.addToGroup(bottom_line)
 
@@ -201,13 +201,13 @@ class WidgetWorldView(QFrame):
 
         top_line = QGraphicsLineItem(
             goal_x_from_center, goal_y_from_center,
-            self.field_height/2, goal_y_from_center)
+            self.field_length/2, goal_y_from_center)
         top_line.setPen(goal_pen)
         self.goals.addToGroup(top_line)
 
         bottom_line = QGraphicsLineItem(
             goal_x_from_center, -goal_y_from_center,
-            self.field_height/2, -goal_y_from_center)
+            self.field_length/2, -goal_y_from_center)
         bottom_line.setPen(goal_pen)
         self.goals.addToGroup(bottom_line)
 
