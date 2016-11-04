@@ -10,10 +10,7 @@ from python_qt_binding import loadUi, QtCore, QtGui, QtWidgets
 from python_qt_binding.QtCore import pyqtSignal, Qt
 from python_qt_binding.QtWidgets import QWidget, QLabel, QSplitter, QVBoxLayout
 
-from roboteam_msgs.msg import World as WorldMessage
-from roboteam_msgs.msg import GeometryData as GeometryMessage
-from roboteam_msgs.msg import RefereeData as RefboxMessage
-from roboteam_msgs.msg import SteeringAction, SteeringGoal
+from roboteam_msgs import msg
 
 from items.widget_robot_details import WidgetRobotDetails
 from items.widget_world_view import WidgetWorldView
@@ -35,10 +32,10 @@ THEM_COLOR = QtGui.QColor(127, 84, 147); # The color of the opponents robots.
 class WorldViewPlugin(Plugin):
 
     # Qt signal for when the world state changes.
-    worldstate_signal = pyqtSignal(WorldMessage)
+    worldstate_signal = pyqtSignal(msg.World)
     # Qt signal for when the graphics calibration changes.
-    geometry_signal = pyqtSignal(GeometryMessage)
-    referee_signal = pyqtSignal(RefboxMessage)
+    geometry_signal = pyqtSignal(msg.GeometryData)
+    referee_signal = pyqtSignal(msg.RefereeData)
 
 
     def __init__(self, context):
@@ -80,17 +77,25 @@ class WorldViewPlugin(Plugin):
         # Add widget to the user interface
         context.add_widget(self.widget)
 
+        # ---- Subscribers ----
+
         # Subscribe to the world state.
-        self.worldstate_sub = rospy.Subscriber("world_state", WorldMessage, self.callback_worldstate)
+        self.worldstate_sub = rospy.Subscriber("world_state", msg.World, self.callback_worldstate)
 
         # Subscribe to the geometry information.
-        self.geometry_sub = rospy.Subscriber("vision_geometry", GeometryMessage, self.callback_geometry)
+        self.geometry_sub = rospy.Subscriber("vision_geometry", msg.GeometryData, self.callback_geometry)
 
         # Subscribe to the referee information.
-        self.referee_sub = rospy.Subscriber("vision_refbox", RefboxMessage, self.callback_referee)
+        self.referee_sub = rospy.Subscriber("vision_refbox", msg.RefereeData, self.callback_referee)
 
-        # Create the steering action client.
-        self.client = actionlib.SimpleActionClient("steering", SteeringAction)
+        # ---- /Subscribers ----
+
+        # ---- Topics ----
+
+        # Create the Strategy Ignore Robot topic.
+        self.strategy_ignore_topic = rospy.Publisher("strategy_ignore_robot", msg.StrategyIgnoreRobot, queue_size=100)
+
+        # ---- /Topics ----
 
         # ---- Top layout ----
 
@@ -128,7 +133,7 @@ class WorldViewPlugin(Plugin):
         self.sidebar.layout().setContentsMargins(0, 0, 0, 0)
         self.horizontal_splitter.addWidget(self.sidebar)
 
-        self.skill_tester = WidgetSkillTester()
+        self.skill_tester = WidgetSkillTester(self.strategy_ignore_topic)
         self.sidebar.layout().addWidget(self.skill_tester)
 
         self.sidebar.layout().addStretch(1)

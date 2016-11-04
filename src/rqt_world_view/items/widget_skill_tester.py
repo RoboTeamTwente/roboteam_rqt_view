@@ -3,9 +3,12 @@ import sys
 
 from python_qt_binding import QtWidgets
 from python_qt_binding.QtGui import QRegExpValidator
-from python_qt_binding.QtCore import QRegExp
+from python_qt_binding.QtCore import QRegExp, pyqtSignal
 
 from widget_blackboard import WidgetBlackboard
+from rqt_world_view.utils import utils
+
+from roboteam_msgs import msg
 
 
 ROSRUN = "rosrun"
@@ -15,9 +18,15 @@ TESTX_COMMAND = "TestX"
 
 class WidgetSkillTester(QtWidgets.QFrame):
 
+    # Signal to be called when the test process exits.
+    test_stopped_signal = pyqtSignal()
 
-    def __init__(self):
+
+    # strategy_ignore_topic: rospy.Publisher => Topic to notify strategy nodes on that they should ignore a robot.
+    def __init__(self, strategy_ignore_topic):
         super(WidgetSkillTester, self).__init__()
+
+        self.strategy_ignore_topic = strategy_ignore_topic
 
         self.setLayout(QtWidgets.QGridLayout())
 
@@ -25,7 +34,7 @@ class WidgetSkillTester(QtWidgets.QFrame):
 
         # ---- Test button ----
 
-        self.test_button = QtWidgets.QPushButton("Test!")
+        self.test_button = QtWidgets.QPushButton("Run test")
         self.test_button.clicked.connect(self.slot_test_button_pushed)
         self.layout().addWidget(self.test_button, 0, 0, 1, 2)
 
@@ -55,32 +64,64 @@ class WidgetSkillTester(QtWidgets.QFrame):
 
         # ---- Process ----
 
-        self.testx_process = None
+        # Process handle for the TestX programm.
+        self.testx_thread = None
+
+        # The id of the robot we are currently testing.
+        self.bot_test_id = None
+
+        self.test_stopped_signal.connect(self.slot_on_test_exit)
 
 
-    # This slot is called when the "Test" button is pressed.
-    def slot_test_button_pushed(self):
-        self.toggle_testing_process()
+
+    #  the widget to reflex that the test is running.
+    def change_ui_to_running(self):
+        # Disable edit widgets.
+        self.id_entry.setEnabled(False)
+        self.skill_entry.setEnabled(False)
+
+        self.blackboard.set_editable(False)
+
+        # Change the test button text to something appropriate.
+        self.test_button.setText("Stop test")
+
+
+    # Changes the widget to reflect that no test is running.
+    def change_ui_to_idle(self):
+        self.id_entry.setEnabled(True)
+        self.skill_entry.setEnabled(True)
+
+        self.blackboard.set_editable(True)
+
+        # Change the test button text to something appropriate.
+        self.test_button.setText("Run test")
 
     # Starts the test process when it isn't running.
     # Stops the process when it is running.
     def toggle_testing_process(self):
         if self.is_test_running():
-            # Stop the process.
-            self.testx_process.terminate()
+            # Ask the testx thread to stop.
+            self.testx_thread.stop()
+            self.test_button.setText("Stopping...")
         else:
             # Construct the rosrun TestX command.
             command = [ROSRUN, TESTX_PACKAGE, TESTX_COMMAND]
             skill = str(self.skill_entry.text())
             command.append(skill)
 
-            # Add the robot id to the command.
+            # Read the id of the bot to be tested.
             try:
-                bot_id = str(int(self.id_entry.text()))
+                self.bot_test_id = int(self.id_entry.text())
             except ValueError:
-                bot_id = "0"
+                # Default to 0.
+                self.bot_test_id = 0
+                self.id_entry.clear()
+                self.id_entry.insert("0")
 
-            command.append("int:ROBOT_ID=" + bot_id)
+            # Make any online strategy node ignore this robot.
+            self.publish_strategy_ignore_command(self.bot_test_id, True)
+
+            command.append("int:ROBOT_ID=" + str(self.bot_test_id))
 
             # Get the blackboard and add it to the command.
             blackboard = self.blackboard.get_blackboard_testx()
@@ -89,15 +130,48 @@ class WidgetSkillTester(QtWidgets.QFrame):
             print command
 
             # Start the test.
-            self.testx_process = subprocess.Popen(command, stdout=sys.stdout)
+            self.testx_thread = utils.popen_and_call(self.callback_on_test_exit, command, stdout=sys.stdout)
+
+            # Make the ui reflect the running state.
+            self.change_ui_to_running()
+
+
+    # Publishes StrategyIgnoreRobot message on the strategy ignore topic.
+    # bot_id: integer => The id of the robot in question.
+    # ignore: boolean => Wether to ignore this robot or not.
+    def publish_strategy_ignore_command(self, bot_id, ignore):
+        command = msg.StrategyIgnoreRobot()
+        command.id = bot_id
+        command.ignore = ignore
+
+        self.strategy_ignore_topic.publish(command)
 
 
     # Checks whether the testx process is running.
     # Returns true for running, false for not running or nonexistent.
     def is_test_running(self):
-        if self.testx_process:
-            if self.testx_process.poll() == None:
+        if self.testx_thread:
+            if self.testx_thread.isAlive():
                 # The test is still running.
                 return True
         # Fell through, test is not running.
         return False
+
+
+    # Callback that gets called when the test process exits.
+    def callback_on_test_exit(self):
+        print "Test exit!!!!!"
+        self.test_stopped_signal.emit()
+
+
+    # Slot to be called when the test process exits.
+    def slot_on_test_exit(self):
+        self.testx_thread = None
+        # Release controll of the robot.
+        self.publish_strategy_ignore_command(self.bot_test_id, False)
+        # Change the ui to reflect the stopped state.
+        self.change_ui_to_idle()
+
+    # This slot is called when the "Test" button is pressed.
+    def slot_test_button_pushed(self):
+        self.toggle_testing_process()

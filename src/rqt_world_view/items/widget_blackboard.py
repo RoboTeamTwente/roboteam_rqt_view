@@ -78,6 +78,15 @@ class WidgetBlackboard(QFrame):
         return blackboard
 
 
+    # Changes whether the widgets in the blackboard are editable.
+    # editable: boolean
+    def set_editable(self, editable):
+        self.add_item_button.setEnabled(editable)
+
+        for item_id, item in self.blackboard_items.iteritems():
+            item.set_editable(editable)
+
+
     # Adds a new blackboard item.
     def slot_add_item(self):
         item = BlackboardItem(self.new_item_id, self.slot_remove_item)
@@ -247,6 +256,17 @@ class BlackboardItem():
 
             return typestring + ":" + name + "=" + str(value)
 
+
+    # Changes whether the entries options are editable.
+    # editable: boolean
+    def set_editable(self, editable):
+        self.type_widget.setEnabled(editable)
+        self.name_widget.setEnabled(editable)
+        self.string_edit.setEnabled(editable)
+        self.double_edit.setEnabled(editable)
+        self.int_edit.setEnabled(editable)
+        self.bool_edit.setEnabled(editable)
+        self.remove_widget.setEnabled(editable)
 
 
     def slot_remove_widget_pressed(self):

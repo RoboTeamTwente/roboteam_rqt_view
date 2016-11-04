@@ -4,7 +4,7 @@ from python_qt_binding import QtGui, QtCore
 from field_graphics_view import FieldGraphicsView
 from field_graphics_scene import FieldGraphicsScene
 
-from rqt_world_view import utils
+from rqt_world_view.utils import utils
 from graphics_robot import GraphicsRobot
 from qgraphics_arc_item import QGraphicsArcItem
 
