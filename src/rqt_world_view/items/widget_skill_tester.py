@@ -107,7 +107,6 @@ class WidgetSkillTester(QtWidgets.QFrame):
 
     # Stops the test when it's running.
     def stop_test(self):
-        print "Stop test!"
         if self.is_test_running():
             # Ask the testx thread to stop.
             self.testx_thread.stop()
@@ -173,7 +172,6 @@ class WidgetSkillTester(QtWidgets.QFrame):
 
     # Callback that gets called when the test process exits.
     def callback_on_test_exit(self):
-        print "Test exit!!!!!"
         self.test_stopped_signal.emit()
 
 
