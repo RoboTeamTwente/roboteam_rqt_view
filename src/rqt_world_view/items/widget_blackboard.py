@@ -2,6 +2,8 @@ from python_qt_binding.QtWidgets import QFrame, QLabel, QGridLayout, QPushButton
 from python_qt_binding.QtGui import QDoubleValidator, QRegExpValidator
 from python_qt_binding.QtCore import QRegExp
 
+import unicodedata
+
 from roboteam_msgs import msg
 
 
@@ -229,7 +231,7 @@ class BlackboardItem():
         typestring = type_mapping.get(self.type_widget.currentText(), "")
 
         if typestring != "":
-            name = self.name_widget.text()
+            name = unicodedata.normalize('NFKD', self.name_widget.text()).encode('ascii','ignore')
 
             # If there is no name, return an empty string.
             if name == "":
@@ -237,7 +239,8 @@ class BlackboardItem():
 
             value = ""
             if typestring == "string":
-                value = "\"" + self.string_edit.text() + "\""
+                # Convert the unicode string coming from the text box into a python one.
+                value = unicodedata.normalize('NFKD', self.string_edit.text()).encode('ascii','ignore')
             elif typestring == "int":
                 try:
                     value = int(self.int_edit.text())
