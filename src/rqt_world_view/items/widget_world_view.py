@@ -229,6 +229,11 @@ class WidgetWorldView(QFrame):
 
     # Expects a `roboteam_msgs.Vector2f` point.
     def add_debug_point(self, point):
+        # Clear previous points.
+        for item in self.debug_points.childItems():
+            self.debug_points.removeFromGroup(item)
+            del item
+
         line_pen = QtGui.QPen()
         line_pen.setColor(QtGui.QColor(0, 0, 200))
         line_pen.setWidth(15)
