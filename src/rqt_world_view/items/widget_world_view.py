@@ -49,6 +49,9 @@ class WidgetWorldView(QFrame):
 
         self.goals = QGraphicsItemGroup()
 
+        # Debug markers sent via the `view_debug_points` topic.
+        self.debug_points = QGraphicsItemGroup()
+
         self.font = QtGui.QFont()
         self.font.setPixelSize(BOT_DIAMETER*0.8)
 
@@ -78,6 +81,9 @@ class WidgetWorldView(QFrame):
 
         # Add the ball to the scene.
         self.scene.addItem(self.ball)
+
+        # Add the debug points to the scene.
+        self.scene.addItem(self.debug_points)
 
         # Scale the scene so that it fits into the view area.
         self.fieldview.fitInView(self.scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
@@ -220,3 +226,24 @@ class WidgetWorldView(QFrame):
     #     for bot_id, bot in self.robots_us_graphic.iteritems():
     #         if bot.isSelected():
     #             self.robots_us_selected.append(bot_id)
+
+    # Expects a `roboteam_msgs.Vector2f` point.
+    def add_debug_point(self, point):
+        line_pen = QtGui.QPen()
+        line_pen.setColor(QtGui.QColor(0, 0, 200))
+        line_pen.setWidth(15)
+
+        size = 100
+
+        # Create a crosshair at the indicated location.
+        h_line = QGraphicsLineItem(
+            point.x - size, point.y,
+            point.x + size, point.y)
+        h_line.setPen(line_pen)
+        self.debug_points.addToGroup(h_line)
+
+        v_line = QGraphicsLineItem(
+            point.x, point.y - size,
+            point.x, point.y + size)
+        v_line.setPen(line_pen)
+        self.debug_points.addToGroup(v_line)

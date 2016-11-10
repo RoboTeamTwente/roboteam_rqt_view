@@ -38,6 +38,8 @@ class WorldViewPlugin(Plugin):
     geometry_signal = pyqtSignal(msg.GeometryData)
     referee_signal = pyqtSignal(msg.RefereeData)
 
+    debug_point_signal = pyqtSignal(msg.Vector2f)
+
 
     def __init__(self, context):
         super(WorldViewPlugin, self).__init__(context)
@@ -88,6 +90,10 @@ class WorldViewPlugin(Plugin):
 
         # Subscribe to the referee information.
         self.referee_sub = rospy.Subscriber("vision_refbox", msg.RefereeData, self.callback_referee)
+
+
+        # Through this channel debugging locations can be given.
+        self.debug_point_sub = rospy.Subscriber("view_debug_points", msg.Vector2f, self.callback_debug_point)
 
         # ---- /Subscribers ----
 
@@ -149,6 +155,8 @@ class WorldViewPlugin(Plugin):
         self.geometry_signal.connect(self.slot_geometry)
         self.referee_signal.connect(self.slot_referee)
 
+        self.debug_point_signal.connect(self.slot_debug_point)
+
         # ---- /Signal connections ----
 
 
@@ -186,6 +194,9 @@ class WorldViewPlugin(Plugin):
         # Send signal to qt thread.
         self.geometry_signal.emit(message)
 
+    def callback_debug_point(self, message):
+        self.debug_point_signal.emit(message)
+
 
 # ------------------------------------------------------------------------------
 # ---------- Gui change slots --------------------------------------------------
@@ -203,3 +214,6 @@ class WorldViewPlugin(Plugin):
 
     def slot_referee(self, message):
         self.scoreboard.update_with_message(message)
+
+    def slot_debug_point(self, message):
+        self.world_view.add_debug_point(message)
