@@ -39,6 +39,7 @@ class WorldViewPlugin(Plugin):
     referee_signal = pyqtSignal(msg.RefereeData)
 
     debug_point_signal = pyqtSignal(msg.DebugPoint)
+    debug_line_signal = pyqtSignal(msg.DebugLine)
 
 
     def __init__(self, context):
@@ -94,6 +95,7 @@ class WorldViewPlugin(Plugin):
 
         # Through this channel debugging locations can be given.
         self.debug_point_sub = rospy.Subscriber("view_debug_points", msg.DebugPoint, self.callback_debug_point)
+        self.debug_line_sub = rospy.Subscriber("view_debug_lines", msg.DebugLine, self.callback_debug_line)
 
         # ---- /Subscribers ----
 
@@ -156,6 +158,7 @@ class WorldViewPlugin(Plugin):
         self.referee_signal.connect(self.slot_referee)
 
         self.debug_point_signal.connect(self.slot_debug_point)
+        self.debug_line_signal.connect(self.slot_debug_line)
 
         # ---- /Signal connections ----
 
@@ -197,6 +200,9 @@ class WorldViewPlugin(Plugin):
     def callback_debug_point(self, message):
         self.debug_point_signal.emit(message)
 
+    def callback_debug_line(self, message):
+        self.debug_line_signal.emit(message)
+
 
 # ------------------------------------------------------------------------------
 # ---------- Gui change slots --------------------------------------------------
@@ -216,4 +222,7 @@ class WorldViewPlugin(Plugin):
         self.scoreboard.update_with_message(message)
 
     def slot_debug_point(self, message):
-        self.world_view.add_debug_point(message)
+        self.world_view.set_debug_point(message)
+
+    def slot_debug_line(self, message):
+        self.world_view.set_debug_line(message)

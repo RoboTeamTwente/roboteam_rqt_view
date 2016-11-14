@@ -55,8 +55,11 @@ class WidgetWorldView(QFrame):
         # Debug markers sent via the `view_debug_points` topic.
         self.debug_point_parent = QGraphicsItemGroup()
         self.debug_point_parent.setZValue(10)
-
         self.debug_points = {}
+
+        self.debug_line_parent = QGraphicsItemGroup()
+        self.debug_line_parent.setZValue(9)
+        self.debug_lines = {}
 
         self.font = QtGui.QFont()
         self.font.setPixelSize(BOT_DIAMETER*0.8)
@@ -90,6 +93,7 @@ class WidgetWorldView(QFrame):
 
         # Add the debug points to the scene.
         self.scene.addItem(self.debug_point_parent)
+        self.scene.addItem(self.debug_line_parent)
 
         # Scale the scene so that it fits into the view area.
         self.fieldview.fitInView(self.scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
@@ -238,7 +242,7 @@ class WidgetWorldView(QFrame):
     #             self.robots_us_selected.append(bot_id)
 
 
-    def add_debug_point(self, point):
+    def set_debug_point(self, point):
         """Expects a `roboteam_msgs.DebugPoint` point."""
         line_pen = QtGui.QPen()
         line_pen.setColor(QtGui.QColor(0, 0, 200))
@@ -274,3 +278,45 @@ class WidgetWorldView(QFrame):
                 del self.debug_points[point.name]
             else:
                 self.debug_points[point.name].setPos(utils.m_to_mm(point.pos.x), utils.m_to_mm(point.pos.y))
+
+
+    def set_debug_line(self, line):
+        """Expects a `roboteam_msgs.DebugLine` point."""
+
+        if not line.name in self.debug_lines:
+            if not line.delete:
+                self.add_debug_line(line)
+        else:
+            # First remove the line.
+            for item in self.debug_lines[line.name].childItems():
+                self.debug_lines[line.name].removeFromGroup(item)
+                self.scene.removeItem(item)
+            del self.debug_lines[line.name]
+
+            # Then add the new version if necessary.
+            if not line.delete:
+                self.add_debug_line(line)
+
+
+    def add_debug_line(self, line):
+        line_group = QGraphicsItemGroup()
+        line_group.setParentItem(self.debug_line_parent)
+
+        line_pen = QtGui.QPen()
+        line_pen.setColor(QtGui.QColor(0, 0, 200))
+        line_pen.setWidth(15)
+
+        last_point = None
+
+        for i, point in enumerate(line.points):
+            if i > 0:
+                # Add all segments.
+                segment = QGraphicsLineItem(
+                    utils.m_to_mm(point.x), utils.m_to_mm(point.y),
+                    utils.m_to_mm(last_point.x), utils.m_to_mm(last_point.y))
+                segment.setPen(line_pen)
+                line_group.addToGroup(segment)
+
+            last_point = point
+
+        self.debug_lines[line.name] = line_group
