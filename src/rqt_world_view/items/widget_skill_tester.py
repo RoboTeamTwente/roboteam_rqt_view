@@ -36,12 +36,14 @@ class WidgetSkillTester(QtWidgets.QFrame):
 
         self.test_button = QtWidgets.QPushButton("Run test")
         self.test_button.clicked.connect(self.slot_test_button_pushed)
-        self.layout().addWidget(self.test_button, 0, 0, 1, 2)
+        self.layout().addWidget(self.test_button, 0, 0, 1, 3)
 
         # ---- /Test button ----
 
-        self.layout().addWidget(QtWidgets.QLabel("Id"), 1, 0)
-        self.layout().addWidget(QtWidgets.QLabel("Skill"), 1, 1)
+        self.id_label = QtWidgets.QLabel("Id")
+        self.layout().addWidget(self.id_label, 1, 0)
+        self.skill_label = QtWidgets.QLabel("Skill")
+        self.layout().addWidget(self.skill_label, 1, 1, 1, 2)
 
         # ---- Id entry ----
 
@@ -55,12 +57,12 @@ class WidgetSkillTester(QtWidgets.QFrame):
         # ---- /Id entry ----
 
         self.skill_entry = QtWidgets.QLineEdit()
-        self.layout().addWidget(self.skill_entry, 2, 1)
+        self.layout().addWidget(self.skill_entry, 2, 1, 1, 2)
 
         self.blackboard = WidgetBlackboard()
         self.blackboard.layout().setContentsMargins(2, 2, 2, 5)
         self.blackboard.setFrameStyle(QtWidgets.QFrame.Panel | QtWidgets.QFrame.Sunken)
-        self.layout().addWidget(self.blackboard, 3, 0, 1, 2)
+        self.layout().addWidget(self.blackboard, 3, 0, 1, 3)
 
         # ---- Process ----
 
@@ -71,6 +73,54 @@ class WidgetSkillTester(QtWidgets.QFrame):
         self.bot_test_id = None
 
         self.test_stopped_signal.connect(self.slot_on_test_exit)
+
+
+    def remove_child_widgets(self):
+        """Called before cleaning the tester up. Makes sure there are no child wigets floating around."""
+        self.test_button.deleteLater()
+        self.id_label.deleteLater()
+        self.skill_label.deleteLater()
+        self.id_entry.deleteLater()
+        self.skill_entry.deleteLater()
+        self.blackboard.deleteLater()
+        self.remove_button.deleteLater()
+
+        self.test_button = None
+        self.id_label = None
+        self.skill_label = None
+        self.id_entry = None
+        self.skill_entry = None
+        self.blackboard = None
+        self.remove_button = None
+
+        self.deleteLater()
+
+
+    def delete_self(self):
+        """Called when the "x" button is pressed."""
+        self.remove_child_widgets()
+
+        if self.remove_callback != None and self.remove_id != None:
+            self.remove_callback(self.remove_id)
+
+
+    def add_remove_button(self, remove_callback, remove_id):
+        """
+        Creates an "x" button for removing the tester.
+        Should be given a callback from the parent widget that will clean this widget up.
+        Also needs an id to give to the callback, so that the parent widget knows which tester should be removed.
+        """
+        self.remove_button = QtWidgets.QPushButton("x")
+        self.layout().addWidget(self.remove_button, 0, 2)
+        self.remove_button.setMaximumWidth(20)
+        self.remove_button.setSizePolicy(self.remove_button.sizePolicy().Preferred, self.remove_button.sizePolicy().Fixed)
+        # Relocate the test button.
+        self.layout().addWidget(self.test_button, 0, 0, 1, 2)
+
+        self.remove_callback = remove_callback
+        self.remove_id = remove_id
+
+        self.remove_button.clicked.connect(self.delete_self)
 
 
     def change_ui_to_running(self):

@@ -176,6 +176,8 @@ class BlackboardItem():
 
         self.name_widget = QLineEdit()
         self.remove_widget = QPushButton("x")
+        self.remove_widget.setMinimumWidth(20)
+        self.remove_widget.setSizePolicy(self.remove_widget.sizePolicy().Preferred, self.remove_widget.sizePolicy().Fixed)
 
         # ---- Connect signals ----
 

@@ -15,7 +15,8 @@ class WidgetMultiSkillTester(QtWidgets.QFrame):
 
         self.setLayout(QtWidgets.QGridLayout())
 
-        self.testers = []
+        self.testers = {}
+        self.next_tester_id = 0
 
         # ---- Start and stop all buttons ----
 
@@ -64,6 +65,10 @@ class WidgetMultiSkillTester(QtWidgets.QFrame):
 
         # ---- /Scroll area ----
 
+    def remove_tester(self, tester_id):
+        """Gets called by a tester if it wants to be removed."""
+        del self.testers[tester_id]
+
 # ------------------------------------------------------------------------------
 # ---------- Button slots ------------------------------------------------------
 # ------------------------------------------------------------------------------
@@ -73,14 +78,17 @@ class WidgetMultiSkillTester(QtWidgets.QFrame):
         tester = WidgetSkillTester(self.strategy_ignore_topic)
 
         tester.setFrameStyle(QtWidgets.QFrame.Panel)
+        tester.add_remove_button(self.remove_tester, self.next_tester_id)
 
         self.scroll_layout.insertWidget(0, tester)
-        self.testers.append(tester)
+        self.testers[self.next_tester_id] = tester
+
+        self.next_tester_id += 1
 
     def slot_start_all(self):
-        for tester in self.testers:
+        for key, tester in self.testers.iteritems():
             tester.start_test()
 
     def slot_stop_all(self):
-        for tester in self.testers:
+        for key, tester in self.testers.iteritems():
             tester.stop_test()
