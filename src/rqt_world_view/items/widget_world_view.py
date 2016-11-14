@@ -251,7 +251,7 @@ class WidgetWorldView(QFrame):
         size = 100
 
         if not point.name in self.debug_points:
-            if not point.delete:
+            if not point.remove:
                 crosshair = QGraphicsItemGroup()
                 crosshair.setParentItem(self.debug_point_parent)
 
@@ -271,7 +271,7 @@ class WidgetWorldView(QFrame):
                 self.debug_points[point.name] = crosshair
                 crosshair.setPos(utils.m_to_mm(point.pos.x), utils.m_to_mm(point.pos.y))
         else:
-            if point.delete:
+            if point.remove:
                 for item in self.debug_points[point.name].childItems():
                     self.debug_points[point.name].removeFromGroup(item)
                     self.scene.removeItem(item)
@@ -284,7 +284,7 @@ class WidgetWorldView(QFrame):
         """Expects a `roboteam_msgs.DebugLine` point."""
 
         if not line.name in self.debug_lines:
-            if not line.delete:
+            if not line.remove:
                 self.add_debug_line(line)
         else:
             # First remove the line.
@@ -294,7 +294,7 @@ class WidgetWorldView(QFrame):
             del self.debug_lines[line.name]
 
             # Then add the new version if necessary.
-            if not line.delete:
+            if not line.remove:
                 self.add_debug_line(line)
 
 
