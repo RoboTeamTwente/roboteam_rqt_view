@@ -4,20 +4,32 @@ import subprocess
 import time
 
 
-# Converts meters to milimeters.
 def m_to_mm(meters):
+    """Converts meters to milimeters."""
     return meters * 1000.0
 
-# Converts millimeters to meters.
 def mm_to_m(millimeters):
+    """Converts millimeters to meters."""
     return millimeters / 1000.0
 
 
-# Source: http://stackoverflow.com/questions/2581817/python-subprocess-callback-when-cmd-exits
-# Phil's answer.
-# I have made a slight change, in that this version uses a StoppableThread (see `stoppable_thread.py`) instaed of a normal one.
+def millis_to_human_readable(millis):
+    """
+    Converts a value in milliseconds (integer) into a human readable string.
+    e.g. "12:4"
+    """
+    s=millis/1000000
+    m,s=divmod(s,60)
+
+    return str(m) + ":" + str(s)
+
+
 def popen_and_call(onExit, *popenArgs, **popenKWArgs):
     """
+    # Source: http://stackoverflow.com/questions/2581817/python-subprocess-callback-when-cmd-exits
+    # Phil's answer.
+    # I have made a slight change, in that this version uses a StoppableThread (see `stoppable_thread.py`) instaed of a normal one.
+
     Runs a subprocess.Popen, and then calls the function onExit when the
     subprocess completes.
 

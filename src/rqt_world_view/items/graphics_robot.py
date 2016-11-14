@@ -7,14 +7,16 @@ BOT_DIAMETER = 180 # Diameter of the bots in mm.
 
 class GraphicsRobot(QGraphicsItemGroup):
 
-    # Creates a new GraphicsRobot.
-    # bot_id: integer -> The id to display on the robot.
-    # is_us: boolean -> Determines whether this robot belongs to our team.
-    #   If it does, it's color is red and it will be selectable.
-    #   Otherwhise it will be yellow and not selectable.
-    # color: QColor() -> The color to use for the robot body.
-    # font: QFont() -> The font to use to draw the id with.
     def __init__(self, bot_id, is_us, color, font):
+        """
+        Creates a new GraphicsRobot.
+        bot_id: integer -- The id to display on the robot.
+        is_us: boolean -- Determines whether this robot belongs to our team.
+           If it does, it's color is red and it will be selectable.
+           Otherwhise it will be yellow and not selectable.
+        color: QColor() -- The color to use for the robot body.
+        font: QFont() -- The font to use to draw the id with.
+        """
         super(GraphicsRobot, self).__init__()
 
         self.bot_id = bot_id
@@ -59,15 +61,19 @@ class GraphicsRobot(QGraphicsItemGroup):
         self.addToGroup(self.selector)
 
 
-    # Rotates the rotatable part of the bot to the supplied angle.
-    # Angle is in degrees.
     def rotate_to(self, angle):
+        """
+        Rotates the rotatable part of the bot to the supplied angle.
+        Angle is in degrees.
+        """
         self.rotator.setRotation(angle)
 
 
-    # Is called when the item changes.
-    # Currently only listens for selection changes.
     def itemChange(self, change, value):
+        """
+        Is called when the item changes.
+        Currently only listens for selection changes.
+        """
         if change == QGraphicsWidget.ItemSelectedChange:
             if value == True:
                 self.selector.setVisible(True)
@@ -77,12 +83,15 @@ class GraphicsRobot(QGraphicsItemGroup):
         return QGraphicsItem.itemChange(self, change, value)
 
 
-    # Overrides the default `paint` function.
-    # Doesn't paint anything.
-    # This removes the square selection border, which isn't needed because of the seleciton circle being handled in `itemChange`.
-    # No idea if this does anything else strange.
-    # If something is missing from a robot, its probably because of this function.
-    # Look here to only remove the selection line if this implementation turns out to do weird stuff:
-    # http://www.qtcentre.org/threads/15089-QGraphicsView-change-selected-rectangle-style
     def paint(self, painter, option, widget):
+        """
+        Overrides the default `paint` function.
+        Doesn't paint anything.
+        This removes the square selection border, which isn't needed because of the seleciton circle being handled in `itemChange`.
+        No idea if this does anything else strange.
+        If something is missing from a robot, its probably because of this function.
+        Look here to only remove the selection line if this implementation turns out to do weird stuff:
+        http://www.qtcentre.org/threads/15089-QGraphicsView-change-selected-rectangle-style
+        """
+        
         pass

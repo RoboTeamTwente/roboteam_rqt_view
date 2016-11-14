@@ -10,8 +10,9 @@ class FieldGraphicsScene(QGraphicsScene):
     def __init__(self):
         super(FieldGraphicsScene, self).__init__()
 
-    # Reimplement the mouse event function.
     def mousePressEvent(self, event):
+        """Reimplement the mouse event function."""
+        
         # Don't propagate right clicks.
         if (event.button() == Qt.RightButton):
             # Emit the right click signal.

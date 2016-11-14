@@ -32,22 +32,26 @@ class WidgetRobotDetails(QFrame):
         self.layout().addWidget(self.ypos_label, 2, 1)
 
 
-    # Update the info on display using a bot message.
     def update_display(self, bot_msg):
+        """Update the info on display using a bot message."""
         self.xpos_label.setText(str("%.2f" % bot_msg.pos.x))
         self.ypos_label.setText(str("%.2f" % bot_msg.pos.y))
 
 
-    # Sets the selection state of the frame.
-    # Then calls `set_selected_appearance`.
     def set_selected_state(self, is_selected):
+        """
+        Sets the selection state of the frame.
+        Then calls `set_selected_appearance`.
+        """
         self.is_selected = is_selected
         self.set_selected_appearance(is_selected)
 
 
-    # Changes the appearance to be selected or not.
-    # is_selected: boolean => wether the frame is selected or not.
     def set_selected_appearance(self, is_selected):
+        """
+        Changes the appearance to be selected or not.
+        is_selected: boolean => wether the frame is selected or not.
+        """
         if is_selected:
             self.setFrameStyle(QFrame.Panel | QFrame.Sunken)
         else:
@@ -58,7 +62,9 @@ class WidgetRobotDetails(QFrame):
 # ------------------------------------------------------------------------------
 
     def mousePressEvent(self, mouse_event):
-        # Fire the signal.
-        # In `world_view.py` the apropriate bot will be selected
-        # and this frames `set_selected_state` will be called.
+        """
+        Fire the signal.
+        In `world_view.py` the apropriate bot will be selected
+        and this frames `set_selected_state` will be called.
+        """
         self.change_bot_selection.emit(self.bot_id, not self.is_selected)

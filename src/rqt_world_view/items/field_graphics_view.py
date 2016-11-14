@@ -39,9 +39,11 @@ class FieldGraphicsView(QGraphicsView):
         QGraphicsView.mouseMoveEvent(self, mouse_event)
 
 
-    # Called on mouse wheel event.
-    # Zooms the graphics view.
     def wheelEvent(self, wheel_event):
+        """
+        Called on mouse wheel event.
+        Zooms the graphics view.
+        """
         if wheel_event.modifiers() == Qt.NoModifier:
             try:
                 delta = wheel_event.angleDelta().y()

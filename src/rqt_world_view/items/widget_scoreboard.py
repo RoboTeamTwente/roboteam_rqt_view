@@ -1,6 +1,7 @@
 from python_qt_binding.QtWidgets import QFrame, QGridLayout, QLabel
 
 from roboteam_msgs.msg import RefereeStage as Refs
+from rqt_world_view.utils import utils
 
 
 # Scoreboard widget.
@@ -17,7 +18,7 @@ class WidgetScoreboard(QFrame):
         self.them_info = WidgetTeamInfo(them_color)
 
         self.stage = QLabel("Stage")
-        self.stage_time_left = QLabel(millis_to_human_readable(0))
+        self.stage_time_left = QLabel(utils.millis_to_human_readable(0))
 
         # ---- Layout ----
 
@@ -38,7 +39,7 @@ class WidgetScoreboard(QFrame):
         self.them_info.update_with_message(message.them)
 
         self.stage.setText(stage_to_string(message.stage))
-        self.stage_time_left.setText(millis_to_human_readable(message.stage_time_left))
+        self.stage_time_left.setText(utils.millis_to_human_readable(message.stage_time_left))
 
 
 # Team info widget.
@@ -87,11 +88,3 @@ def stage_to_string(stage):
     }
 
     return mapping.get(stage.stage, "Strange stage")
-
-# Converts a value in milliseconds (integer) into a human readable string.
-# e.g. "12:4"
-def millis_to_human_readable(millis):
-    s=millis/1000000
-    m,s=divmod(s,60)
-
-    return str(m) + ":" + str(s)

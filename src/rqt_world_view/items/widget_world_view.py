@@ -22,12 +22,15 @@ FIELD_LINE_COLOR = QtGui.QColor(255, 255, 255)
 BALL_COLOR = QtGui.QColor(255, 100, 0)
 
 
-# Displays the current world state.
 class WidgetWorldView(QFrame):
+    """Displays the current world state."""
+    
 
-    # us_color: QColor() => The color to use for our robots.
-    # them_color: QColor() => The color to use for their robots.
     def __init__(self, us_color, them_color):
+        """
+        us_color: QColor() -- The color to use for our robots.
+        them_color: QColor() -- The color to use for their robots.
+        """
         super(WidgetWorldView, self).__init__()
 
         # Field size in mm.
@@ -92,10 +95,12 @@ class WidgetWorldView(QFrame):
         # ---- /Field view initialization ----
 
 
-    # Updates the world state.
-    # This includes robot and ball positions.
-    # Expects a DetectionFrame message.
     def update_world_state(self, message):
+        """
+        Updates the world state.
+        This includes robot and ball positions.
+        Expects a DetectionFrame message.
+        """
         # Move the ball.
         self.ball.setPos(utils.m_to_mm(message.ball.pos.x) - BALL_DIAMETER/2, -(utils.m_to_mm(message.ball.pos.y) - BALL_DIAMETER/2))
 
@@ -119,10 +124,12 @@ class WidgetWorldView(QFrame):
             self.robots_them[bot.id].rotate_to(-math.degrees(bot.angle))
 
 
-    # Updates the field configuration.
-    # Field size, lines, goal positions etc.
-    # Expects a GeometryFieldSize message.
     def update_field_configuration(self, message):
+        """
+        Updates the field configuration.
+        Field size, lines, goal positions etc.
+        Expects a GeometryFieldSize message.
+        """
         self.field_width = utils.m_to_mm(message.field.field_width)
         self.field_length = utils.m_to_mm(message.field.field_length)
 
@@ -228,8 +235,9 @@ class WidgetWorldView(QFrame):
     #         if bot.isSelected():
     #             self.robots_us_selected.append(bot_id)
 
-    # Expects a `roboteam_msgs.Vector2f` point.
+
     def add_debug_point(self, point):
+        """Expects a `roboteam_msgs.Vector2f` point."""
         line_pen = QtGui.QPen()
         line_pen.setColor(QtGui.QColor(0, 0, 200))
         line_pen.setWidth(15)

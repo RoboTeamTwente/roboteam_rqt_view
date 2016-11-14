@@ -7,8 +7,8 @@ from widget_skill_tester import WidgetSkillTester
 
 class WidgetMultiSkillTester(QtWidgets.QFrame):
 
-    # strategy_ignore_topic: rospy.Publisher => Topic to notify strategy nodes on that they should ignore a robot.
     def __init__(self, strategy_ignore_topic):
+        """strategy_ignore_topic: rospy.Publisher => Topic to notify strategy nodes on that they should ignore a robot."""
         super(WidgetMultiSkillTester, self).__init__()
 
         self.strategy_ignore_topic = strategy_ignore_topic
@@ -68,8 +68,8 @@ class WidgetMultiSkillTester(QtWidgets.QFrame):
 # ---------- Button slots ------------------------------------------------------
 # ------------------------------------------------------------------------------
 
-    # Gets called when the "Add tester" button is clicked.
     def slot_add_tester(self):
+        """Gets called when the "Add tester" button is clicked."""
         tester = WidgetSkillTester(self.strategy_ignore_topic)
 
         tester.setFrameStyle(QtWidgets.QFrame.Panel)

@@ -41,9 +41,8 @@ class WidgetBlackboard(QFrame):
         # ---- /Setup table ----
 
 
-    # Returns the values in this blackboard in the form of a
-    # Blackboard.msg
     def get_blackboard_message(self):
+        """Returns the values in this blackboard in the form of a Blackboard.msg"""
 
         message = msg.Blackboard()
 
@@ -65,10 +64,12 @@ class WidgetBlackboard(QFrame):
         return message
 
 
-    # Returns the blackboard in a way usable by the "TestX" program.
-    # Returns a list of blackboard entries.
-    # The entry format is as follows: "type:name=value"
     def get_blackboard_testx(self):
+        """
+        Returns the blackboard in a way usable by the "TestX" program.
+        Returns a list of blackboard entries.
+        The entry format is as follows: "type:name=value"
+        """
         blackboard = []
         for item_id, item in self.blackboard_items.iteritems():
             entry = item.get_entry_testx()
@@ -80,17 +81,19 @@ class WidgetBlackboard(QFrame):
         return blackboard
 
 
-    # Changes whether the widgets in the blackboard are editable.
-    # editable: boolean
     def set_editable(self, editable):
+        """
+        Changes whether the widgets in the blackboard are editable.
+        editable: boolean
+        """
         self.add_item_button.setEnabled(editable)
 
         for item_id, item in self.blackboard_items.iteritems():
             item.set_editable(editable)
 
 
-    # Adds a new blackboard item.
     def slot_add_item(self):
+        """Adds a new blackboard item."""
         item = BlackboardItem(self.new_item_id, self.slot_remove_item)
         self.blackboard_items[self.new_item_id] = item
 
@@ -104,8 +107,8 @@ class WidgetBlackboard(QFrame):
         self.insert_row += 1
 
 
-    # Removes the blackboard item with id: item_id.
     def slot_remove_item(self, item_id):
+        """Removes the blackboard item with id: item_id."""
         item = self.blackboard_items[item_id]
 
         self.layout().removeWidget(item.type_widget)
@@ -128,9 +131,11 @@ class WidgetBlackboard(QFrame):
 
 class BlackboardItem():
 
-    # Remove_callback is the function to call when the
-    # remove button is pressed.
     def __init__(self, item_id, remove_callback):
+        """
+        Remove_callback is the function to call when the
+        remove button is pressed.
+        """
 
         self.id = item_id
         self.remove_callback = remove_callback
@@ -178,12 +183,14 @@ class BlackboardItem():
         self.type_widget.currentIndexChanged.connect(self.slot_type_selection_changed)
 
 
-    # Returns one of the below:
-    # msg.StringEntry
-    # msg.Int32Entry
-    # msg.Float64Entry
-    # msg.BoolEntry
     def get_entry_message(self):
+        """
+        Returns one of the below:
+        msg.StringEntry
+        msg.Int32Entry
+        msg.Float64Entry
+        msg.BoolEntry
+        """
         typestring = self.type_widget.currentText()
 
         if typestring == "String":
@@ -214,10 +221,13 @@ class BlackboardItem():
             return item
 
 
-    # Returns the blackboard entry in a way usable by the "TestX" program.
-    # The format is as follows: "type:name=value"
-    # Returns an empty string if the entry has no name.
     def get_entry_testx(self):
+        """
+        Returns the blackboard entry in a way usable by the "TestX" program.
+        The format is as follows: "type:name=value"
+        Returns an empty string if the entry has no name.
+        """
+
         # Maps selectable types to their "TestX" name.
         # Currently it is only lowercasing, but there is no
         # guarantee it stays that way. Hence the dict.
@@ -260,9 +270,11 @@ class BlackboardItem():
             return typestring + ":" + name + "=" + str(value)
 
 
-    # Changes whether the entries options are editable.
-    # editable: boolean
     def set_editable(self, editable):
+        """
+        Changes whether the entries options are editable.
+        editable: boolean
+        """
         self.type_widget.setEnabled(editable)
         self.name_widget.setEnabled(editable)
         self.string_edit.setEnabled(editable)
@@ -275,8 +287,9 @@ class BlackboardItem():
     def slot_remove_widget_pressed(self):
         self.remove_callback(self.id)
 
-    # This slot is connected to the type_widget combobox currentIndexChanged().
+
     def slot_type_selection_changed(self, index):
+        """This slot is connected to the type_widget combobox currentIndexChanged()."""
 
         # Clear the inputs.
         self.string_edit.clear()

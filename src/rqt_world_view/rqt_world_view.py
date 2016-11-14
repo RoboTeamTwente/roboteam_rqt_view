@@ -203,8 +203,8 @@ class WorldViewPlugin(Plugin):
 # ------------------------------------------------------------------------------
 
 
-    # Receives the changeUI(PyQt_PyObject) signal which gets sent when a message arrives at 'message_callback'.
     def slot_worldstate(self, message):
+        """Receives the changeUI(PyQt_PyObject) signal which gets sent when a message arrives at 'message_callback'."""
         self.world_view.update_world_state(message)
 
 
