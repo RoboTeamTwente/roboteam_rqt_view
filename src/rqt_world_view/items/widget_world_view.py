@@ -24,7 +24,7 @@ BALL_COLOR = QtGui.QColor(255, 100, 0)
 
 class WidgetWorldView(QFrame):
     """Displays the current world state."""
-    
+
 
     def __init__(self, us_color, them_color):
         """
@@ -55,6 +55,8 @@ class WidgetWorldView(QFrame):
         # Debug markers sent via the `view_debug_points` topic.
         self.debug_point_parent = QGraphicsItemGroup()
         self.debug_point_parent.setZValue(10)
+
+        self.debug_points = {}
 
         self.font = QtGui.QFont()
         self.font.setPixelSize(BOT_DIAMETER*0.8)
@@ -237,25 +239,38 @@ class WidgetWorldView(QFrame):
 
 
     def add_debug_point(self, point):
-        """Expects a `roboteam_msgs.Vector2f` point."""
+        """Expects a `roboteam_msgs.DebugPoint` point."""
         line_pen = QtGui.QPen()
         line_pen.setColor(QtGui.QColor(0, 0, 200))
         line_pen.setWidth(15)
 
         size = 100
 
-        crosshair = QGraphicsItemGroup()
-        crosshair.setParentItem(self.debug_point_parent)
+        if not point.name in self.debug_points:
+            if not point.delete:
+                crosshair = QGraphicsItemGroup()
+                crosshair.setParentItem(self.debug_point_parent)
 
-        # Create a crosshair at the indicated location.
-        h_line = QGraphicsLineItem(
-            point.x - size, point.y,
-            point.x + size, point.y)
-        h_line.setPen(line_pen)
-        crosshair.addToGroup(h_line)
+                # Create a crosshair at the indicated location.
+                h_line = QGraphicsLineItem(
+                    -size, 0,
+                    size, 0)
+                h_line.setPen(line_pen)
+                crosshair.addToGroup(h_line)
 
-        v_line = QGraphicsLineItem(
-            point.x, point.y - size,
-            point.x, point.y + size)
-        v_line.setPen(line_pen)
-        crosshair.addToGroup(v_line)
+                v_line = QGraphicsLineItem(
+                    0, -size,
+                    0, size)
+                v_line.setPen(line_pen)
+                crosshair.addToGroup(v_line)
+
+                self.debug_points[point.name] = crosshair
+                crosshair.setPos(utils.m_to_mm(point.pos.x), utils.m_to_mm(point.pos.y))
+        else:
+            if point.delete:
+                for item in self.debug_points[point.name].childItems():
+                    self.debug_points[point.name].removeFromGroup(item)
+                    self.scene.removeItem(item)
+                del self.debug_points[point.name]
+            else:
+                self.debug_points[point.name].setPos(utils.m_to_mm(point.pos.x), utils.m_to_mm(point.pos.y))

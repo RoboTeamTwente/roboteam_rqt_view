@@ -38,7 +38,7 @@ class WorldViewPlugin(Plugin):
     geometry_signal = pyqtSignal(msg.GeometryData)
     referee_signal = pyqtSignal(msg.RefereeData)
 
-    debug_point_signal = pyqtSignal(msg.Vector2f)
+    debug_point_signal = pyqtSignal(msg.DebugPoint)
 
 
     def __init__(self, context):
@@ -93,7 +93,7 @@ class WorldViewPlugin(Plugin):
 
 
         # Through this channel debugging locations can be given.
-        self.debug_point_sub = rospy.Subscriber("view_debug_points", msg.Vector2f, self.callback_debug_point)
+        self.debug_point_sub = rospy.Subscriber("view_debug_points", msg.DebugPoint, self.callback_debug_point)
 
         # ---- /Subscribers ----
 
