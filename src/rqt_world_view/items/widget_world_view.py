@@ -236,15 +236,18 @@ class WidgetWorldView(QFrame):
 
         size = 100
 
+        crosshair = QGraphicsItemGroup()
+        crosshair.setParentItem(self.debug_point_parent)
+
         # Create a crosshair at the indicated location.
         h_line = QGraphicsLineItem(
             point.x - size, point.y,
             point.x + size, point.y)
         h_line.setPen(line_pen)
-        h_line.setParentItem(self.debug_point_parent)
+        crosshair.addToGroup(h_line)
 
         v_line = QGraphicsLineItem(
             point.x, point.y - size,
             point.x, point.y + size)
         v_line.setPen(line_pen)
-        v_line.setParentItem(self.debug_point_parent)
+        crosshair.addToGroup(v_line)
