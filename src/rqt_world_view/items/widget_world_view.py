@@ -269,7 +269,7 @@ class WidgetWorldView(QFrame):
                 crosshair.addToGroup(v_line)
 
                 self.debug_points[point.name] = crosshair
-                crosshair.setPos(utils.m_to_mm(point.pos.x), utils.m_to_mm(point.pos.y))
+                crosshair.setPos(utils.m_to_mm(point.pos.x), -utils.m_to_mm(point.pos.y))
         else:
             if point.remove:
                 for item in self.debug_points[point.name].childItems():
@@ -277,7 +277,7 @@ class WidgetWorldView(QFrame):
                     self.scene.removeItem(item)
                 del self.debug_points[point.name]
             else:
-                self.debug_points[point.name].setPos(utils.m_to_mm(point.pos.x), utils.m_to_mm(point.pos.y))
+                self.debug_points[point.name].setPos(utils.m_to_mm(point.pos.x), -utils.m_to_mm(point.pos.y))
 
 
     def set_debug_line(self, line):
@@ -312,8 +312,8 @@ class WidgetWorldView(QFrame):
             if i > 0:
                 # Add all segments.
                 segment = QGraphicsLineItem(
-                    utils.m_to_mm(point.x), utils.m_to_mm(point.y),
-                    utils.m_to_mm(last_point.x), utils.m_to_mm(last_point.y))
+                    utils.m_to_mm(point.x), -utils.m_to_mm(point.y),
+                    utils.m_to_mm(last_point.x), -utils.m_to_mm(last_point.y))
                 segment.setPen(line_pen)
                 line_group.addToGroup(segment)
 
