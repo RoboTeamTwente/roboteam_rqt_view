@@ -46,6 +46,7 @@ class GraphicsRobot(QGraphicsItemGroup):
         # Bot id text.
         id_text = QGraphicsTextItem(str(self.bot_id))
         id_text.setFont(self.font)
+        id_text.setDefaultTextColor(QtGui.QColor(220, 220, 220))
         id_text.setPos(-BOT_DIAMETER/3,-BOT_DIAMETER/2)
         self.addToGroup(id_text)
 
@@ -93,5 +94,5 @@ class GraphicsRobot(QGraphicsItemGroup):
         Look here to only remove the selection line if this implementation turns out to do weird stuff:
         http://www.qtcentre.org/threads/15089-QGraphicsView-change-selected-rectangle-style
         """
-        
+
         pass
