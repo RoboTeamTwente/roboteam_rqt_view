@@ -244,40 +244,43 @@ class WidgetWorldView(QFrame):
 
     def set_debug_point(self, point):
         """Expects a `roboteam_msgs.DebugPoint` point."""
+        if not point.name in self.debug_points:
+            if not point.remove:
+                self.add_debug_point(point)
+        else:
+            for item in self.debug_points[point.name].childItems():
+                self.debug_points[point.name].removeFromGroup(item)
+                self.scene.removeItem(item)
+            del self.debug_points[point.name]
+
+            if not point.remove:
+                self.add_debug_point(point)
+
+    def add_debug_point(self, point):
         line_pen = QtGui.QPen()
-        line_pen.setColor(QtGui.QColor(0, 0, 200))
+        line_pen.setColor(QtGui.QColor(point.color.r, point.color.g, point.color.b))
         line_pen.setWidth(15)
 
         size = 100
+        
+        crosshair = QGraphicsItemGroup()
+        crosshair.setParentItem(self.debug_point_parent)
 
-        if not point.name in self.debug_points:
-            if not point.remove:
-                crosshair = QGraphicsItemGroup()
-                crosshair.setParentItem(self.debug_point_parent)
+        # Create a crosshair at the indicated location.
+        h_line = QGraphicsLineItem(
+            -size, 0,
+            size, 0)
+        h_line.setPen(line_pen)
+        crosshair.addToGroup(h_line)
 
-                # Create a crosshair at the indicated location.
-                h_line = QGraphicsLineItem(
-                    -size, 0,
-                    size, 0)
-                h_line.setPen(line_pen)
-                crosshair.addToGroup(h_line)
+        v_line = QGraphicsLineItem(
+            0, -size,
+            0, size)
+        v_line.setPen(line_pen)
+        crosshair.addToGroup(v_line)
 
-                v_line = QGraphicsLineItem(
-                    0, -size,
-                    0, size)
-                v_line.setPen(line_pen)
-                crosshair.addToGroup(v_line)
-
-                self.debug_points[point.name] = crosshair
-                crosshair.setPos(utils.m_to_mm(point.pos.x), -utils.m_to_mm(point.pos.y))
-        else:
-            if point.remove:
-                for item in self.debug_points[point.name].childItems():
-                    self.debug_points[point.name].removeFromGroup(item)
-                    self.scene.removeItem(item)
-                del self.debug_points[point.name]
-            else:
-                self.debug_points[point.name].setPos(utils.m_to_mm(point.pos.x), -utils.m_to_mm(point.pos.y))
+        self.debug_points[point.name] = crosshair
+        crosshair.setPos(utils.m_to_mm(point.pos.x), -utils.m_to_mm(point.pos.y))
 
 
     def set_debug_line(self, line):
@@ -303,7 +306,7 @@ class WidgetWorldView(QFrame):
         line_group.setParentItem(self.debug_line_parent)
 
         line_pen = QtGui.QPen()
-        line_pen.setColor(QtGui.QColor(0, 0, 200))
+        line_pen.setColor(QtGui.QColor(line.color.r, line.color.g, line.color.b))
         line_pen.setWidth(15)
 
         last_point = None
