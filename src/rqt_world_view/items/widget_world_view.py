@@ -108,7 +108,7 @@ class WidgetWorldView(QFrame):
         Expects a DetectionFrame message.
         """
         # Move the ball.
-        self.ball.setPos(utils.m_to_mm(message.ball.pos.x) - BALL_DIAMETER/2, -(utils.m_to_mm(message.ball.pos.y) - BALL_DIAMETER/2))
+        self.ball.setPos(utils.m_to_mm(message.ball.pos.x) - BALL_DIAMETER/2, -utils.m_to_mm(message.ball.pos.y) - BALL_DIAMETER/2)
 
         # Process the us bots.
         for bot in message.us:
@@ -262,7 +262,7 @@ class WidgetWorldView(QFrame):
         line_pen.setWidth(15)
 
         size = 100
-        
+
         crosshair = QGraphicsItemGroup()
         crosshair.setParentItem(self.debug_point_parent)
 
