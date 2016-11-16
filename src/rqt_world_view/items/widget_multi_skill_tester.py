@@ -67,6 +67,7 @@ class WidgetMultiSkillTester(QtWidgets.QFrame):
 
     def remove_tester(self, tester_id):
         """Gets called by a tester if it wants to be removed."""
+        self.testers[tester_id].deleteLater()
         del self.testers[tester_id]
 
 # ------------------------------------------------------------------------------

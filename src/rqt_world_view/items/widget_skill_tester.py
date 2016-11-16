@@ -98,6 +98,8 @@ class WidgetSkillTester(QtWidgets.QFrame):
 
     def delete_self(self):
         """Called when the "x" button is pressed."""
+        self.stop_test()
+
         self.remove_child_widgets()
 
         if self.remove_callback != None and self.remove_id != None:
@@ -131,6 +133,9 @@ class WidgetSkillTester(QtWidgets.QFrame):
 
         self.blackboard.set_editable(False)
 
+        if self.remove_button:
+            self.remove_button.setEnabled(False)
+
         # Change the test button text to something appropriate.
         self.test_button.setText("Stop test")
 
@@ -141,6 +146,9 @@ class WidgetSkillTester(QtWidgets.QFrame):
         self.skill_entry.setEnabled(True)
 
         self.blackboard.set_editable(True)
+
+        if self.remove_button:
+            self.remove_button.setEnabled(True)
 
         # Change the test button text to something appropriate.
         self.test_button.setText("Run test")
