@@ -5,6 +5,7 @@ from field_graphics_view import FieldGraphicsView
 from field_graphics_scene import FieldGraphicsScene
 
 from rqt_world_view.utils import utils
+from rqt_world_view.utils.grsim_connector import GrsimConnector
 from graphics_robot import GraphicsRobot
 from qgraphics_arc_item import QGraphicsArcItem
 
@@ -99,6 +100,11 @@ class WidgetWorldView(QFrame):
         self.fieldview.fitInView(self.scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
 
         # ---- /Field view initialization ----
+
+        # Open a connection to grsim.
+        self.grsim = GrsimConnector()
+
+        self.grsim.place_robot()
 
 
     def update_world_state(self, message):

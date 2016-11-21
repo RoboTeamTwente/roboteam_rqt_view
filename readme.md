@@ -1,7 +1,8 @@
-It is highly recommended (maybe even necessary) to install python-subprocess32:
+# Dependencies
 
-sudo apt-get install python-subprocess32
+Run `install_dependencies.sh` or manually execute:
 
+`sudo apt install python-subprocess32 python-protobuf`
 
 # Topics
 

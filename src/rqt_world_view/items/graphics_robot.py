@@ -27,9 +27,8 @@ class GraphicsRobot(QGraphicsItemGroup):
         self.rotator = QGraphicsItemGroup()
         self.addToGroup(self.rotator)
 
-        if is_us:
-            # Make the bot selectable.
-            self.setFlag(QGraphicsItem.ItemIsSelectable, True)
+        # Make the bot selectable.
+        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
 
         # Main robot body.
         ellipse = QGraphicsEllipseItem(-BOT_DIAMETER/2, -BOT_DIAMETER/2, BOT_DIAMETER, BOT_DIAMETER)
