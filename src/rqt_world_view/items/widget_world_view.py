@@ -1,4 +1,4 @@
-from python_qt_binding.QtWidgets import QGraphicsItem, QFrame, QGridLayout, QGraphicsRectItem, QGraphicsItemGroup, QGraphicsEllipseItem, QGraphicsLineItem
+from python_qt_binding.QtWidgets import QGraphicsItem, QFrame, QHBoxLayout, QVBoxLayout, QGraphicsRectItem, QGraphicsItemGroup, QGraphicsEllipseItem, QGraphicsLineItem, QPushButton
 from python_qt_binding import QtGui, QtCore
 
 from field_graphics_view import FieldGraphicsView
@@ -66,7 +66,23 @@ class WidgetWorldView(QFrame):
         self.font.setPixelSize(BOT_DIAMETER*0.8)
 
 
-        self.setLayout(QGridLayout())
+        self.setLayout(QVBoxLayout())
+
+        # ---- Toolbar initialization ----
+
+        self.toolbar = QFrame()
+        self.toolbar.setLayout(QHBoxLayout())
+        self.layout().addWidget(self.toolbar)
+
+        self.out_of_field_button = QPushButton("Put all out of field")
+        self.toolbar.layout().addWidget(self.out_of_field_button)
+        self.out_of_field_button.clicked.connect(self.out_of_field_button_pressed)
+
+        self.reset_view_button = QPushButton("Reset view")
+        self.toolbar.layout().addWidget(self.reset_view_button)
+        self.reset_view_button.clicked.connect(self.reset_view)
+
+        # ---- /Toolbar initialization ----
 
         # ---- Field view initialization ----
 
@@ -103,8 +119,6 @@ class WidgetWorldView(QFrame):
 
         # Open a connection to grsim.
         self.grsim = GrsimConnector()
-
-        self.grsim.place_robot()
 
 
     def update_world_state(self, message):
@@ -329,3 +343,26 @@ class WidgetWorldView(QFrame):
             last_point = point
 
         self.debug_lines[line.name] = line_group
+
+
+    # --------------------------------------------------------------------------
+    # ---- Toolbar slots -------------------------------------------------------
+    # --------------------------------------------------------------------------
+
+    def out_of_field_button_pressed(self):
+        """Places all the robots outside the field."""
+        for i, robot in self.robots_us.iteritems():
+            x = (BOT_DIAMETER * 2 * (i + 1))
+            y = - self.field_width/2 - FIELD_RUNOUT_ZONE - BOT_DIAMETER
+
+            self.grsim.place_robot(robot.bot_id, True, x, y)
+
+        for i, robot in self.robots_them.iteritems():
+            x = -(BOT_DIAMETER * 2 * (i + 1))
+            y = - self.field_width/2 - FIELD_RUNOUT_ZONE - BOT_DIAMETER
+
+            self.grsim.place_robot(robot.bot_id, False, x, y)
+
+
+    def reset_view(self):
+        self.fieldview.fitInView(self.field_background, QtCore.Qt.KeepAspectRatio)
