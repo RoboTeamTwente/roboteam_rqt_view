@@ -91,6 +91,9 @@ class WidgetWorldView(QFrame):
         self.fieldview.setScene(self.scene)
         self.layout().addWidget(self.fieldview)
 
+        # Connect the scenes right clicks.
+        self.scene.right_click_signal.connect(self.slot_scene_right_clicked)
+
         # Enable antialiasing.
         self.fieldview.setRenderHints(QtGui.QPainter.Antialiasing)
         self.scene.clear()
@@ -345,23 +348,38 @@ class WidgetWorldView(QFrame):
         self.debug_lines[line.name] = line_group
 
 
+    def slot_scene_right_clicked(self, event):
+        """To be called when the field scene is right clicked."""
+
+        pos_x = event.scenePos().x()
+        pos_y = -event.scenePos().y()
+
+        for bot_id, robot in self.robots_us.iteritems():
+            if robot.isSelected():
+                self.grsim.place_robot(bot_id, True, pos_x, pos_y)
+
+        for bot_id, robot in self.robots_them.iteritems():
+            if robot.isSelected():
+                self.grsim.place_robot(bot_id, False, pos_x, pos_y)
+
+
     # --------------------------------------------------------------------------
     # ---- Toolbar slots -------------------------------------------------------
     # --------------------------------------------------------------------------
 
     def out_of_field_button_pressed(self):
         """Places all the robots outside the field."""
-        for i, robot in self.robots_us.iteritems():
-            x = (BOT_DIAMETER * 2 * (i + 1))
+        for bot_id, robot in self.robots_us.iteritems():
+            x = (BOT_DIAMETER * 2 * (bot_id + 1))
             y = - self.field_width/2 - FIELD_RUNOUT_ZONE - BOT_DIAMETER
 
-            self.grsim.place_robot(robot.bot_id, True, x, y)
+            self.grsim.place_robot(bot_id, True, x, y)
 
-        for i, robot in self.robots_them.iteritems():
-            x = -(BOT_DIAMETER * 2 * (i + 1))
+        for bot_id, robot in self.robots_them.iteritems():
+            x = -(BOT_DIAMETER * 2 * (bot_id + 1))
             y = - self.field_width/2 - FIELD_RUNOUT_ZONE - BOT_DIAMETER
 
-            self.grsim.place_robot(robot.bot_id, False, x, y)
+            self.grsim.place_robot(bot_id, False, x, y)
 
 
     def reset_view(self):
