@@ -354,13 +354,20 @@ class WidgetWorldView(QFrame):
         pos_x = event.scenePos().x()
         pos_y = -event.scenePos().y()
 
+        placed_a_robot = False
+
         for bot_id, robot in self.robots_us.iteritems():
             if robot.isSelected():
                 self.grsim.place_robot(bot_id, True, pos_x, pos_y)
+                placed_a_robot = True
 
         for bot_id, robot in self.robots_them.iteritems():
             if robot.isSelected():
                 self.grsim.place_robot(bot_id, False, pos_x, pos_y)
+                placed_a_robot = True
+
+        if not placed_a_robot:
+            self.grsim.place_ball(pos_x, pos_y)
 
 
     # --------------------------------------------------------------------------

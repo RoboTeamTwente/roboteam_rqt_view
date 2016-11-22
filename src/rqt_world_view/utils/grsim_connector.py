@@ -30,7 +30,6 @@ class GrsimConnector:
             yellow_team = not is_us
 
         packet = grSim_Packet()
-        robot = grSim_RobotReplacement()
 
         packet.replacement.robots.add()
 
@@ -39,5 +38,21 @@ class GrsimConnector:
         packet.replacement.robots[0].dir = 0
         packet.replacement.robots[0].id = id
         packet.replacement.robots[0].yellowteam = yellow_team
+
+        self.socket.writeDatagram(packet.SerializeToString(), self.default_ip, self.default_port)
+
+
+    def place_ball(self, x, y):
+        """
+        Sends a message to Grsim to place the ball at a specific position.
+        Both x and y are in mm.
+        """
+
+        packet = grSim_Packet()
+
+        packet.replacement.ball.x = utils.mm_to_m(x)
+        packet.replacement.ball.y = utils.mm_to_m(y)
+        packet.replacement.ball.vx = 0
+        packet.replacement.ball.vy = 0
 
         self.socket.writeDatagram(packet.SerializeToString(), self.default_ip, self.default_port)
