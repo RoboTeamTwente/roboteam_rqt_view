@@ -15,9 +15,6 @@ import math
 BOT_DIAMETER = 180 # Diameter of the bots in mm.
 BALL_DIAMETER = 50
 
-# Size of the area around the field in mm.
-FIELD_RUNOUT_ZONE = 300
-
 FIELD_COLOR = QtGui.QColor(0, 200, 50)
 FIELD_LINE_COLOR = QtGui.QColor(255, 255, 255)
 BALL_COLOR = QtGui.QColor(255, 100, 0)
@@ -37,6 +34,7 @@ class WidgetWorldView(QFrame):
         # Field size in mm.
         self.field_width = 9000
         self.field_height = 6000
+        self.field_boundary = 300
 
         self.us_color = us_color
         self.them_color = them_color
@@ -161,11 +159,12 @@ class WidgetWorldView(QFrame):
         """
         self.field_width = utils.m_to_mm(message.field.field_width)
         self.field_length = utils.m_to_mm(message.field.field_length)
+        self.field_boundary = utils.m_to_mm(message.field.boundary_width)
 
         # Resize the field background.
         self.field_background.setRect(
-            -(self.field_length/2 + FIELD_RUNOUT_ZONE), -(self.field_width/2 + FIELD_RUNOUT_ZONE),
-            self.field_length + FIELD_RUNOUT_ZONE * 2, self.field_width + FIELD_RUNOUT_ZONE * 2)
+            -(self.field_length/2 + self.field_boundary), -(self.field_width/2 + self.field_boundary),
+            self.field_length + self.field_boundary * 2, self.field_width + self.field_boundary * 2)
 
         # Remove all field lines.
         for item in self.field_lines.childItems():
