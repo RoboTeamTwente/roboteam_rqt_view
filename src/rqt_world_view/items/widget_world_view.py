@@ -184,8 +184,8 @@ class WidgetWorldView(QFrame):
             line_pen.setWidth(utils.m_to_mm(msg_line.thickness))
 
             line = QGraphicsLineItem(
-                utils.m_to_mm(msg_line.x_begin), -utils.m_to_mm(msg_line.y_begin),
-                utils.m_to_mm(msg_line.x_end), -utils.m_to_mm(msg_line.y_end))
+                utils.m_to_mm(msg_line.begin.x), -utils.m_to_mm(msg_line.begin.y),
+                utils.m_to_mm(msg_line.end.x), -utils.m_to_mm(msg_line.end.y))
             line.setPen(line_pen)
             self.field_lines.addToGroup(line)
 
@@ -196,7 +196,7 @@ class WidgetWorldView(QFrame):
             line_pen.setWidth(utils.m_to_mm(msg_line.thickness))
 
             arc = QGraphicsArcItem(
-                utils.m_to_mm(msg_arc.x_center - msg_arc.radius), -utils.m_to_mm(msg_arc.y_center - msg_arc.radius),
+                utils.m_to_mm(msg_arc.center.x - msg_arc.radius), -utils.m_to_mm(msg_arc.center.y - msg_arc.radius),
                 utils.m_to_mm(msg_arc.radius)*2, -utils.m_to_mm(msg_arc.radius)*2)
             arc.setStartAngle(math.degrees(msg_arc.a1)*16)
             arc.setSpanAngle(math.degrees(msg_arc.a2 - msg_arc.a1)*16)
