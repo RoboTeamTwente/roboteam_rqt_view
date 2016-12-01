@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(roboteam_rqt_view)
 
+# Needed for the documentation generator.
+set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
+
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
@@ -104,7 +107,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES rqt_tutorial
-  CATKIN_DEPENDS rospy rqt_gui rqt_gui_py actionlib roboteam_msgs
+  CATKIN_DEPENDS rospy rqt_gui rqt_gui_py actionlib roboteam_msgs roboteam_utils
 #  DEPENDS system_lib
 )
 
