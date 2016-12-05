@@ -377,13 +377,13 @@ class WidgetWorldView(QFrame):
         """Places all the robots outside the field."""
         for bot_id, robot in self.robots_us.iteritems():
             x = (BOT_DIAMETER * 2 * (bot_id + 1))
-            y = - self.field_width/2 - FIELD_RUNOUT_ZONE - BOT_DIAMETER
+            y = - self.field_width/2 - self.field_boundary - BOT_DIAMETER
 
             self.grsim.place_robot(bot_id, True, x, y)
 
         for bot_id, robot in self.robots_them.iteritems():
             x = -(BOT_DIAMETER * 2 * (bot_id + 1))
-            y = - self.field_width/2 - FIELD_RUNOUT_ZONE - BOT_DIAMETER
+            y = - self.field_width/2 - self.field_boundary - BOT_DIAMETER
 
             self.grsim.place_robot(bot_id, False, x, y)
 
