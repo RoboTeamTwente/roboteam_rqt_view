@@ -18,10 +18,6 @@ from items.widget_scoreboard import WidgetScoreboard
 from items.widget_skill_tester import WidgetSkillTester
 from items.widget_multi_skill_tester import WidgetMultiSkillTester
 
-
-# Size of the area around the field in mm.
-FIELD_RUNOUT_ZONE = 300
-
 FIELD_COLOR = QtGui.QColor(0, 200, 50)
 FIELD_LINE_COLOR = QtGui.QColor(255, 255, 255)
 BALL_COLOR = QtGui.QColor(255, 100, 0)
