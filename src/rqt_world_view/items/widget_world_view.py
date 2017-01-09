@@ -66,10 +66,13 @@ class WidgetWorldView(QFrame):
 
         self.setLayout(QVBoxLayout())
 
+        self.setContentsMargins(0, 0, 0, 0)
+
         # ---- Toolbar initialization ----
 
         self.toolbar = QFrame()
         self.toolbar.setLayout(QHBoxLayout())
+        self.toolbar.setContentsMargins(0, 0, 0, 0)
         self.layout().addWidget(self.toolbar)
 
         self.out_of_field_button = QPushButton("Put all out of field")

@@ -163,6 +163,9 @@ class WorldViewPlugin(Plugin):
         # TODO unregister all publishers here
         self.strategy_ignore_topic.unregister()
 
+        self.debug_point_sub.unregister()
+        self.debug_line_sub.unregister()
+
     def save_settings(self, plugin_settings, instance_settings):
         # TODO save intrinsic configuration, usually using:
         # instance_settings.set_value(k, v)
