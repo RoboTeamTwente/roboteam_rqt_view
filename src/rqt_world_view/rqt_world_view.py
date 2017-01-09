@@ -1,7 +1,5 @@
 import os
 import rospy
-import rospkg
-import actionlib
 import roslib
 roslib.load_manifest("roboteam_msgs")
 
@@ -22,8 +20,8 @@ FIELD_COLOR = QtGui.QColor(0, 200, 50)
 FIELD_LINE_COLOR = QtGui.QColor(255, 255, 255)
 BALL_COLOR = QtGui.QColor(255, 100, 0)
 
-US_COLOR = QtGui.QColor(255, 50, 50); # The color of our robots.
-THEM_COLOR = QtGui.QColor(127, 84, 147); # The color of the opponents robots.
+US_COLOR = QtGui.QColor(255, 50, 50) # The color of our robots.
+THEM_COLOR = QtGui.QColor(127, 84, 147) # The color of the opponents robots.
 
 
 class WorldViewPlugin(Plugin):
@@ -165,6 +163,9 @@ class WorldViewPlugin(Plugin):
 
         self.debug_point_sub.unregister()
         self.debug_line_sub.unregister()
+        self.worldstate_sub.unregister()
+        self.geometry_sub.unregister()
+        self.referee_sub.unregister()
 
     def save_settings(self, plugin_settings, instance_settings):
         # TODO save intrinsic configuration, usually using:
