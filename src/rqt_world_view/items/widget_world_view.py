@@ -1,4 +1,4 @@
-from python_qt_binding.QtWidgets import QGraphicsItem, QFrame, QHBoxLayout, QVBoxLayout, QGraphicsRectItem, QGraphicsItemGroup, QGraphicsEllipseItem, QGraphicsLineItem, QPushButton
+from python_qt_binding.QtWidgets import QGraphicsItem, QFrame, QHBoxLayout, QVBoxLayout, QGraphicsRectItem, QGraphicsItemGroup, QGraphicsEllipseItem, QGraphicsLineItem, QPushButton, QLabel
 from python_qt_binding import QtGui, QtCore
 
 from field_graphics_view import FieldGraphicsView
@@ -63,7 +63,6 @@ class WidgetWorldView(QFrame):
         self.font = QtGui.QFont()
         self.font.setPixelSize(BOT_DIAMETER*0.8)
 
-
         self.setLayout(QVBoxLayout())
 
         self.setContentsMargins(0, 0, 0, 0)
@@ -120,6 +119,17 @@ class WidgetWorldView(QFrame):
         self.fieldview.fitInView(self.scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
 
         # ---- /Field view initialization ----
+
+        # ---- Info labels ----
+
+        self.lbl_cursor_info = QLabel("0, 0")
+        self.layout().addWidget(self.lbl_cursor_info)
+
+        # ---- /Info labels ----
+
+        # Start tracking the mouse.
+        self.scene.mouse_move_signal.connect(self.slot_scene_mouse_moved)
+        self.fieldview.setMouseTracking(True)
 
         # Open a connection to grsim.
         self.grsim = GrsimConnector()
@@ -371,6 +381,13 @@ class WidgetWorldView(QFrame):
         if not placed_a_robot:
             self.grsim.place_ball(pos_x, pos_y)
 
+
+    def slot_scene_mouse_moved(self, event):
+
+        self.lbl_cursor_info.setText(
+            str(round(utils.mm_to_m(event.scenePos().x()), 2)) + ", " +
+            str(round(utils.mm_to_m(event.scenePos().y()), 2))
+            )
 
     # --------------------------------------------------------------------------
     # ---- Toolbar slots -------------------------------------------------------
