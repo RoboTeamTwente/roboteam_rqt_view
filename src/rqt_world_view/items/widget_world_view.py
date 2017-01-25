@@ -386,7 +386,7 @@ class WidgetWorldView(QFrame):
 
         self.lbl_cursor_info.setText(
             str(round(utils.mm_to_m(event.scenePos().x()), 2)) + ", " +
-            str(round(utils.mm_to_m(event.scenePos().y()), 2))
+            str(round(utils.mm_to_m(-event.scenePos().y()), 2))
             )
 
     # --------------------------------------------------------------------------
