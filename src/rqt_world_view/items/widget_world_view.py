@@ -86,6 +86,10 @@ class WidgetWorldView(QFrame):
         self.toolbar.layout().addWidget(self.reset_view_button)
         self.reset_view_button.clicked.connect(self.reset_view)
 
+        self.clear_debug_button = QPushButton("Clear debug drawings")
+        self.toolbar.layout().addWidget(self.clear_debug_button)
+        self.clear_debug_button.clicked.connect(self.clear_debug_drawings)
+
         # ---- /Toolbar initialization ----
 
         # ---- Field view initialization ----
@@ -435,3 +439,17 @@ class WidgetWorldView(QFrame):
 
     def reset_view(self):
         self.fieldview.fitInView(self.field_background, QtCore.Qt.KeepAspectRatio)
+
+
+    def clear_debug_drawings(self):
+        for name in self.debug_points.keys():
+            for item in self.debug_points[name].childItems():
+                self.debug_points[name].removeFromGroup(item)
+                self.scene.removeItem(item)
+            del self.debug_points[name]
+
+        for name in self.debug_lines.keys():
+            for item in self.debug_lines[name].childItems():
+                self.debug_lines[name].removeFromGroup(item)
+                self.scene.removeItem(item)
+            del self.debug_lines[name]
