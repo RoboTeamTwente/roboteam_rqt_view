@@ -11,6 +11,8 @@ from qgraphics_arc_item import QGraphicsArcItem
 
 import math
 
+import rospy
+
 
 BOT_DIAMETER = 180 # Diameter of the bots in mm.
 BALL_DIAMETER = 50
@@ -38,6 +40,8 @@ class WidgetWorldView(QFrame):
 
         self.us_color = us_color
         self.them_color = them_color
+
+        self.field_normalized = False
 
         self.field_background = QGraphicsRectItem(-self.field_width/2, -self.field_height/2, self.field_width, self.field_height)
 
@@ -170,6 +174,17 @@ class WidgetWorldView(QFrame):
         Field size, lines, goal positions etc.
         Expects a GeometryFieldSize message.
         """
+
+        # Check for field normalization.
+        if rospy.has_param("normalize_field") and rospy.has_param("our_side"):
+            normalize_field = rospy.get_param("normalize_field")
+            our_side = rospy.get_param("our_side")
+
+            if normalize_field and our_side == "right":
+                self.field_normalized = True
+            else:
+                self.field_normalized = False
+
         self.field_width = utils.m_to_mm(message.field.field_width)
         self.field_length = utils.m_to_mm(message.field.field_length)
         self.field_boundary = utils.m_to_mm(message.field.boundary_width)
@@ -363,8 +378,13 @@ class WidgetWorldView(QFrame):
     def slot_scene_right_clicked(self, event):
         """To be called when the field scene is right clicked."""
 
-        pos_x = event.scenePos().x()
-        pos_y = -event.scenePos().y()
+        normalize_value = 1
+
+        if self.field_normalized:
+            normalize_value = -1
+
+        pos_x = event.scenePos().x() * normalize_value
+        pos_y = -(event.scenePos().y() * normalize_value)
 
         placed_a_robot = False
 
@@ -384,9 +404,14 @@ class WidgetWorldView(QFrame):
 
     def slot_scene_mouse_moved(self, event):
 
+        normalize_value = 1
+
+        if self.field_normalized:
+            normalize_value = -1
+
         self.lbl_cursor_info.setText(
-            str(round(utils.mm_to_m(event.scenePos().x()), 2)) + ", " +
-            str(round(utils.mm_to_m(-event.scenePos().y()), 2))
+            str(round(utils.mm_to_m(event.scenePos().x() * normalize_value), 2)) + ", " +
+            str(round(utils.mm_to_m(-(event.scenePos().y() * normalize_value)), 2))
             )
 
     # --------------------------------------------------------------------------
