@@ -143,6 +143,13 @@ class WorldViewPlugin(Plugin):
 
         # ---- /Sidebar ----
 
+        # Make only the main view expand when the window resizes.
+        self.vertical_splitter.setStretchFactor(0, 0)
+        self.vertical_splitter.setStretchFactor(1, 1)
+
+        self.horizontal_splitter.setStretchFactor(0, 1)
+        self.horizontal_splitter.setStretchFactor(1, 0)
+
         # ---- Signal connections ----
 
         # Connect the signal sent by the worldstate callback to the message slot.
