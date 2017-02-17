@@ -16,6 +16,7 @@ import rospy
 
 BOT_DIAMETER = 180 # Diameter of the bots in mm.
 BALL_DIAMETER = 50
+BALL_CROSSHAIR_SPACING = 100 # Distance from the ball to the ball crosshair.
 
 FIELD_COLOR = QtGui.QColor(0, 200, 50)
 FIELD_LINE_COLOR = QtGui.QColor(255, 255, 255)
@@ -35,7 +36,7 @@ class WidgetWorldView(QFrame):
 
         # Field size in mm.
         self.field_width = 9000
-        self.field_height = 6000
+        self.field_length = 6000
         self.field_boundary = 300
 
         self.us_color = us_color
@@ -43,7 +44,8 @@ class WidgetWorldView(QFrame):
 
         self.field_normalized = False
 
-        self.field_background = QGraphicsRectItem(-self.field_width/2, -self.field_height/2, self.field_width, self.field_height)
+        self.field_background = QGraphicsRectItem(-self.field_width/2, -self.field_length/2, self.field_width, self.field_length)
+        self.field_background.setZValue(-10)
 
         self.robots_us = {}
         self.robots_them = {}
@@ -52,8 +54,10 @@ class WidgetWorldView(QFrame):
         self.ball.setBrush(QtGui.QBrush(BALL_COLOR))
 
         self.field_lines = QGraphicsItemGroup()
+        self.field_lines.setZValue(-5)
 
         self.goals = QGraphicsItemGroup()
+        self.field_lines.setZValue(-4)
 
         # Debug markers sent via the `view_debug_points` topic.
         self.debug_point_parent = QGraphicsItemGroup()
@@ -63,6 +67,27 @@ class WidgetWorldView(QFrame):
         self.debug_line_parent = QGraphicsItemGroup()
         self.debug_line_parent.setZValue(9)
         self.debug_lines = {}
+
+        self.ball_crosshair_pen = QtGui.QPen()
+        self.ball_crosshair_pen.setColor(QtGui.QColor(0, 0, 0, 50))
+        self.ball_crosshair_pen.setWidth(15)
+
+        self.ball_crosshair_parent = QGraphicsItemGroup()
+        self.ball_crosshair_parent.setZValue(0)
+        self.ball_top_line = QGraphicsLineItem()
+        self.ball_right_line = QGraphicsLineItem()
+        self.ball_bottom_line = QGraphicsLineItem()
+        self.ball_left_line = QGraphicsLineItem()
+
+        self.ball_top_line.setPen(self.ball_crosshair_pen)
+        self.ball_right_line.setPen(self.ball_crosshair_pen)
+        self.ball_bottom_line.setPen(self.ball_crosshair_pen)
+        self.ball_left_line.setPen(self.ball_crosshair_pen)
+
+        self.ball_crosshair_parent.addToGroup(self.ball_top_line)
+        self.ball_crosshair_parent.addToGroup(self.ball_right_line)
+        self.ball_crosshair_parent.addToGroup(self.ball_bottom_line)
+        self.ball_crosshair_parent.addToGroup(self.ball_left_line)
 
         self.font = QtGui.QFont()
         self.font.setPixelSize(BOT_DIAMETER*0.8)
@@ -123,6 +148,9 @@ class WidgetWorldView(QFrame):
         self.scene.addItem(self.debug_point_parent)
         self.scene.addItem(self.debug_line_parent)
 
+        # Add the ball crosshair.
+        self.scene.addItem(self.ball_crosshair_parent)
+
         # Scale the scene so that it fits into the view area.
         self.fieldview.fitInView(self.scene.sceneRect(), QtCore.Qt.KeepAspectRatio)
 
@@ -149,8 +177,17 @@ class WidgetWorldView(QFrame):
         This includes robot and ball positions.
         Expects a DetectionFrame message.
         """
+        ball_x = utils.m_to_mm(message.ball.pos.x)
+        ball_y = -utils.m_to_mm(message.ball.pos.y)
+
         # Move the ball.
-        self.ball.setPos(utils.m_to_mm(message.ball.pos.x) - BALL_DIAMETER/2, -utils.m_to_mm(message.ball.pos.y) - BALL_DIAMETER/2)
+        self.ball.setPos(ball_x - BALL_DIAMETER/2, ball_y - BALL_DIAMETER/2)
+
+        # Move the ball croshairs.
+        self.ball_top_line.setLine(ball_x, -self.field_width/2, ball_x, ball_y - BALL_CROSSHAIR_SPACING)
+        self.ball_right_line.setLine(ball_x + BALL_CROSSHAIR_SPACING, ball_y, self.field_length/2, ball_y)
+        self.ball_bottom_line.setLine(ball_x, self.field_width/2, ball_x, ball_y + BALL_CROSSHAIR_SPACING)
+        self.ball_left_line.setLine(ball_x - BALL_CROSSHAIR_SPACING, ball_y, -self.field_length/2, ball_y)
 
         # Process the us bots.
         for bot in message.us:
