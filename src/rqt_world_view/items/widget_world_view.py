@@ -323,6 +323,10 @@ class WidgetWorldView(QFrame):
         self.goals.addToGroup(bottom_line)
 
 
+        # Reset the graphicsscene's size.
+        self.scene.setSceneRect(self.scene.itemsBoundingRect());
+
+
     # Slot for the scenes selectionChanged signal.
     # def slot_selection_changed(self):
     #     # Clear the selection lists.
