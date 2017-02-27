@@ -1,5 +1,6 @@
 from python_qt_binding.QtWidgets import QGraphicsItem, QFrame, QHBoxLayout, QVBoxLayout, QGraphicsRectItem, QGraphicsItemGroup, QGraphicsEllipseItem, QGraphicsLineItem, QPushButton, QLabel
 from python_qt_binding import QtGui, QtCore
+from python_qt_binding.QtCore import pyqtSignal
 
 from field_graphics_view import FieldGraphicsView
 from field_graphics_scene import FieldGraphicsScene
@@ -8,6 +9,8 @@ from rqt_world_view.utils import utils
 from rqt_world_view.utils.grsim_connector import GrsimConnector
 from graphics_robot import GraphicsRobot
 from qgraphics_arc_item import QGraphicsArcItem
+
+from std_msgs import msg as std_msg
 
 import math
 
@@ -26,13 +29,16 @@ BALL_COLOR = QtGui.QColor(255, 100, 0)
 class WidgetWorldView(QFrame):
     """Displays the current world state."""
 
-
-    def __init__(self, us_color, them_color):
+    def __init__(self, us_color, them_color, halt_pub):
         """
         us_color: QColor() -- The color to use for our robots.
         them_color: QColor() -- The color to use for their robots.
         """
         super(WidgetWorldView, self).__init__()
+
+        # Stuff needed to halt properly
+        self.halt_pub = halt_pub
+        self.is_halting = False
 
         # Field size in mm.
         self.field_width = 9000
@@ -114,6 +120,10 @@ class WidgetWorldView(QFrame):
         self.clear_debug_button = QPushButton("Clear debug drawings")
         self.toolbar.layout().addWidget(self.clear_debug_button)
         self.clear_debug_button.clicked.connect(self.clear_debug_drawings)
+
+        self.toggle_halt_button = QPushButton("Press to halt")
+        self.toolbar.layout().addWidget(self.toggle_halt_button)
+        self.toggle_halt_button.clicked.connect(self.toggle_halt)
 
         # ---- /Toolbar initialization ----
 
@@ -494,3 +504,27 @@ class WidgetWorldView(QFrame):
                 self.debug_lines[name].removeFromGroup(item)
                 self.scene.removeItem(item)
             del self.debug_lines[name]
+
+    def halt_update(self, message):
+        """
+        Calt when something updates the halt state. Maks the halt button red/ordinary and
+        changes the text as well.
+        """
+        self.is_halting = message.data
+
+        if self.is_halting:
+            self.toggle_halt_button.setStyleSheet('QPushButton {background-color: #FF0000;}')
+            self.toggle_halt_button.setText("Halting")
+        else:
+            self.toggle_halt_button.setStyleSheet('QPushButton {}')
+            self.toggle_halt_button.setText("Not halting")
+
+    def toggle_halt(self):
+        """
+        Called when the halt button is pressed. Sends an opposite halt command of the currently
+        known halt state.
+        """
+        message = std_msg.Bool()
+        message.data = not self.is_halting
+
+        self.halt_pub.publish(message)

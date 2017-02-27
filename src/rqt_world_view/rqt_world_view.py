@@ -9,6 +9,7 @@ from python_qt_binding.QtCore import pyqtSignal, Qt
 from python_qt_binding.QtWidgets import QWidget, QLabel, QSplitter, QVBoxLayout
 
 from roboteam_msgs import msg
+from std_msgs import msg as std_msg
 
 from items.widget_robot_details import WidgetRobotDetails
 from items.widget_world_view import WidgetWorldView
@@ -35,6 +36,7 @@ class WorldViewPlugin(Plugin):
     debug_point_signal = pyqtSignal(msg.DebugPoint)
     debug_line_signal = pyqtSignal(msg.DebugLine)
 
+    halt_update_signal = pyqtSignal(std_msg.Bool)
 
     def __init__(self, context):
         super(WorldViewPlugin, self).__init__(context)
@@ -91,12 +93,18 @@ class WorldViewPlugin(Plugin):
         self.debug_point_sub = rospy.Subscriber("view_debug_points", msg.DebugPoint, self.callback_debug_point)
         self.debug_line_sub = rospy.Subscriber("view_debug_lines", msg.DebugLine, self.callback_debug_line)
 
+        # Whenever something broadcasts a halt, this subscriber gets it
+        self.halt_sub = rospy.Subscriber("halt", std_msg.Bool, self.callback_halt)
+
         # ---- /Subscribers ----
 
         # ---- Topics ----
 
         # Create the Strategy Ignore Robot topic.
         self.strategy_ignore_topic = rospy.Publisher("strategy_ignore_robot", msg.StrategyIgnoreRobot, queue_size=100)
+
+        # Halt publisher such that the widget can halt as well
+        self.halt_pub = rospy.Publisher("halt", std_msg.Bool, queue_size = 10) 
 
         # ---- /Topics ----
 
@@ -114,7 +122,7 @@ class WorldViewPlugin(Plugin):
 
         # ---- World viewer ----
 
-        self.world_view = WidgetWorldView(US_COLOR, THEM_COLOR)
+        self.world_view = WidgetWorldView(US_COLOR, THEM_COLOR, self.halt_pub)
 
         self.horizontal_splitter.addWidget(self.world_view)
 
@@ -161,18 +169,22 @@ class WorldViewPlugin(Plugin):
         self.debug_point_signal.connect(self.slot_debug_point)
         self.debug_line_signal.connect(self.slot_debug_line)
 
+        self.halt_update_signal.connect(self.slot_halt_update)
+
         # ---- /Signal connections ----
 
 
     def shutdown_plugin(self):
         # TODO unregister all publishers here
         self.strategy_ignore_topic.unregister()
+        self.halt_pub.unregister()
 
         self.debug_point_sub.unregister()
         self.debug_line_sub.unregister()
         self.worldstate_sub.unregister()
         self.geometry_sub.unregister()
         self.referee_sub.unregister()
+        self.halt_sub.unregister()
 
     def save_settings(self, plugin_settings, instance_settings):
         # TODO save intrinsic configuration, usually using:
@@ -210,6 +222,8 @@ class WorldViewPlugin(Plugin):
     def callback_debug_line(self, message):
         self.debug_line_signal.emit(message)
 
+    def callback_halt(self, message):
+        self.halt_update_signal.emit(message)
 
 # ------------------------------------------------------------------------------
 # ---------- Gui change slots --------------------------------------------------
@@ -233,3 +247,6 @@ class WorldViewPlugin(Plugin):
 
     def slot_debug_line(self, message):
         self.world_view.set_debug_line(message)
+
+    def slot_halt_update(self, message):
+        self.world_view.halt_update(message)
