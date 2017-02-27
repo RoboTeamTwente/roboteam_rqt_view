@@ -60,6 +60,8 @@ class GraphicsRobot(QGraphicsItemGroup):
         self.selector.setVisible(False)
         self.addToGroup(self.selector)
 
+        self.was_seen_last_update = True
+
 
     def rotate_to(self, angle):
         """
@@ -81,6 +83,12 @@ class GraphicsRobot(QGraphicsItemGroup):
                 self.selector.setVisible(False)
 
         return QGraphicsItem.itemChange(self, change, value)
+
+    def set_was_seen_last_update(self, was_seen):
+        self.was_seen_last_update = was_seen
+
+    def was_seen_last_update(self):
+        return self.was_seen_last_update
 
 
     def paint(self, painter, option, widget):

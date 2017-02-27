@@ -208,6 +208,15 @@ class WidgetWorldView(QFrame):
 
             self.robots_us[bot.id].setPos(utils.m_to_mm(bot.pos.x), -utils.m_to_mm(bot.pos.y))
             self.robots_us[bot.id].rotate_to(-math.degrees(bot.angle))
+            self.robots_us[bot.id].set_was_seen_last_update(True)
+
+        for bot_id in self.robots_us.keys():
+            if self.robots_us[bot_id].was_seen_last_update:
+                self.robots_us[bot_id].set_was_seen_last_update(False)
+            else:
+                # Old robot, remove it.
+                self.scene.removeItem(self.robots_us[bot_id])
+                del self.robots_us[bot_id]
 
         # Process the them bots.
         for bot in message.them:
@@ -217,6 +226,15 @@ class WidgetWorldView(QFrame):
 
             self.robots_them[bot.id].setPos(utils.m_to_mm(bot.pos.x), -utils.m_to_mm(bot.pos.y))
             self.robots_them[bot.id].rotate_to(-math.degrees(bot.angle))
+            self.robots_them[bot.id].set_was_seen_last_update(True)
+
+        for bot_id in self.robots_them.keys():
+            if self.robots_them[bot_id].was_seen_last_update:
+                self.robots_them[bot_id].set_was_seen_last_update(False)
+            else:
+                # Old robot, remove it.
+                self.scene.removeItem(self.robots_them[bot_id])
+                del self.robots_them[bot_id]
 
 
     def update_field_configuration(self, message):
