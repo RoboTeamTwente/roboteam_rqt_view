@@ -6,6 +6,7 @@
     <qtgui>
       <group>
         <label>RoboTeam Twente</label>
+        <icon type="file">icon.png</icon>
       </group>
       <!-- optional grouping...
       <group>
@@ -13,8 +14,8 @@
       </group>
       -->
       <label>RoboTeam world view</label>
-      <icon type="theme">system-help</icon>
       <statustip>Great user interface to provide real value.</statustip>
+      <icon type="theme">computer</icon>
     </qtgui>
   </class>
 </library>
