@@ -15,7 +15,7 @@
       -->
       <label>RoboTeam world view</label>
       <statustip>Great user interface to provide real value.</statustip>
-      <icon type="theme">computer</icon>
+      <icon type="file">WorldView.png</icon>
     </qtgui>
   </class>
 </library>
