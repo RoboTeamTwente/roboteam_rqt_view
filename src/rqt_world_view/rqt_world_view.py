@@ -5,7 +5,7 @@ roslib.load_manifest("roboteam_msgs")
 
 from qt_gui.plugin import Plugin
 from python_qt_binding import loadUi, QtCore, QtGui, QtWidgets
-from python_qt_binding.QtCore import pyqtSignal, Qt
+from python_qt_binding.QtCore import pyqtSignal, Qt, QTimer
 from python_qt_binding.QtWidgets import QWidget, QLabel, QSplitter, QVBoxLayout
 
 from roboteam_msgs import msg
@@ -23,6 +23,9 @@ BALL_COLOR = QtGui.QColor(255, 100, 0)
 
 US_COLOR = QtGui.QColor(255, 50, 50) # The color of our robots.
 THEM_COLOR = QtGui.QColor(127, 84, 147) # The color of the opponents robots.
+
+# Milliseconds to wait for a vision packet before assuming it has stopped.
+VISION_TIMEOUT_TIME = 2000
 
 
 class WorldViewPlugin(Plugin):
@@ -105,7 +108,7 @@ class WorldViewPlugin(Plugin):
         self.strategy_ignore_topic = rospy.Publisher("strategy_ignore_robot", msg.StrategyIgnoreRobot, queue_size=100)
 
         # Halt publisher such that the widget can halt as well
-        self.halt_pub = rospy.Publisher("halt", std_msg.Bool, queue_size = 10) 
+        self.halt_pub = rospy.Publisher("halt", std_msg.Bool, queue_size = 10)
 
         # ---- /Topics ----
 
@@ -158,6 +161,17 @@ class WorldViewPlugin(Plugin):
 
         self.horizontal_splitter.setStretchFactor(0, 1)
         self.horizontal_splitter.setStretchFactor(1, 0)
+
+        # ---- Vision status timer ----
+
+        self.vision_timer = QTimer()
+        self.vision_timer.setInterval(VISION_TIMEOUT_TIME)
+        self.vision_timer.setSingleShot(True)
+        self.vision_timer.timeout.connect(self.slot_vision_lost)
+
+        self.has_vision_connection = False
+
+        # ---- /Vision status timer ----
 
         # ---- Signal connections ----
 
@@ -235,6 +249,14 @@ class WorldViewPlugin(Plugin):
         """Receives the changeUI(PyQt_PyObject) signal which gets sent when a message arrives at 'message_callback'."""
         self.world_view.update_world_state(message)
 
+        # Reset the vision timeout timer.
+        self.vision_timer.start()
+
+        if self.has_vision_connection == False:
+            # Reset the background color.
+            self.widget.setStyleSheet('')
+            self.has_vision_connection = True
+
 
     def slot_geometry(self, message):
         self.world_view.update_field_configuration(message)
@@ -251,3 +273,9 @@ class WorldViewPlugin(Plugin):
 
     def slot_halt_update(self, message):
         self.world_view.halt_update(message)
+
+
+    def slot_vision_lost(self):
+        """Call when there hasn't been a packet from vision for a while."""
+        self.widget.setStyleSheet('background-color: #FF0000;')
+        self.has_vision_connection = False
