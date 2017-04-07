@@ -109,6 +109,10 @@ class WidgetWorldView(QFrame):
         self.toolbar.setContentsMargins(0, 0, 0, 0)
         self.layout().addWidget(self.toolbar)
 
+        self.vision_status_indicator = QLabel("Vision status")
+        self.vision_status_indicator.setAlignment(QtCore.Qt.AlignCenter)
+        self.toolbar.layout().addWidget(self.vision_status_indicator)
+
         self.out_of_field_button = QPushButton("Put all out of field")
         self.toolbar.layout().addWidget(self.out_of_field_button)
         self.out_of_field_button.clicked.connect(self.out_of_field_button_pressed)
@@ -546,3 +550,10 @@ class WidgetWorldView(QFrame):
         message.data = not self.is_halting
 
         self.halt_pub.publish(message)
+
+
+    def set_vision_status_indicator(self, status):
+        if status == True:
+            self.vision_status_indicator.setStyleSheet("color: #00aa00")
+        else:
+            self.vision_status_indicator.setStyleSheet("color: #FF0000")

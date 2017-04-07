@@ -253,8 +253,7 @@ class WorldViewPlugin(Plugin):
         self.vision_timer.start()
 
         if self.has_vision_connection == False:
-            # Reset the background color.
-            self.widget.setStyleSheet('')
+            self.world_view.set_vision_status_indicator(True)
             self.has_vision_connection = True
 
 
@@ -277,5 +276,5 @@ class WorldViewPlugin(Plugin):
 
     def slot_vision_lost(self):
         """Call when there hasn't been a packet from vision for a while."""
-        self.widget.setStyleSheet('background-color: #FF0000;')
+        self.world_view.set_vision_status_indicator(False)
         self.has_vision_connection = False
