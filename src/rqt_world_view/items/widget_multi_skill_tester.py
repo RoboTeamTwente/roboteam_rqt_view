@@ -81,7 +81,8 @@ class WidgetMultiSkillTester(QtWidgets.QFrame):
         tester.setFrameStyle(QtWidgets.QFrame.Panel)
         tester.add_remove_button(self.remove_tester, self.next_tester_id)
 
-        self.scroll_layout.insertWidget(0, tester)
+        # Insert the new tester right before the spacer at the bottom.
+        self.scroll_layout.insertWidget(self.scroll_layout.count()-1, tester)
         self.testers[self.next_tester_id] = tester
 
         self.next_tester_id += 1

@@ -3,7 +3,7 @@ import sys
 
 from python_qt_binding import QtWidgets
 from python_qt_binding.QtGui import QRegExpValidator
-from python_qt_binding.QtCore import QRegExp, pyqtSignal
+from python_qt_binding.QtCore import QRegExp, pyqtSignal, Qt
 
 from widget_blackboard import WidgetBlackboard
 from rqt_world_view.utils import utils
@@ -35,6 +35,7 @@ class WidgetSkillTester(QtWidgets.QFrame):
         # ---- Test button ----
 
         self.test_button = QtWidgets.QPushButton("Run test")
+        self.test_button.setFocusPolicy(Qt.ClickFocus)
         self.test_button.clicked.connect(self.slot_test_button_pushed)
         self.layout().addWidget(self.test_button, 0, 0, 1, 3)
 
@@ -59,10 +60,18 @@ class WidgetSkillTester(QtWidgets.QFrame):
         self.skill_entry = QtWidgets.QLineEdit()
         self.layout().addWidget(self.skill_entry, 2, 1, 1, 2)
 
+        # ---- Blackboard ----
+
         self.blackboard = WidgetBlackboard()
         self.blackboard.layout().setContentsMargins(2, 2, 2, 5)
         self.blackboard.setFrameStyle(QtWidgets.QFrame.Panel | QtWidgets.QFrame.Sunken)
         self.layout().addWidget(self.blackboard, 3, 0, 1, 3)
+
+        # Set the tab order so that pressing tab on the skill entry
+        # will lead to the blackboard fields.
+        self.setTabOrder(self.skill_entry, self.blackboard)
+
+        # ---- /Blackboard ----
 
         # ---- Process ----
 
@@ -113,6 +122,7 @@ class WidgetSkillTester(QtWidgets.QFrame):
         Also needs an id to give to the callback, so that the parent widget knows which tester should be removed.
         """
         self.remove_button = QtWidgets.QPushButton("x")
+        self.remove_button.setFocusPolicy(Qt.ClickFocus)
         self.layout().addWidget(self.remove_button, 0, 2)
         self.remove_button.setMaximumWidth(20)
         self.remove_button.setSizePolicy(self.remove_button.sizePolicy().Preferred, self.remove_button.sizePolicy().Fixed)

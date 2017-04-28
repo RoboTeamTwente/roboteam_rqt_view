@@ -1,6 +1,6 @@
 from python_qt_binding.QtWidgets import QFrame, QLabel, QGridLayout, QPushButton, QComboBox, QLineEdit, QStackedWidget, QCheckBox
 from python_qt_binding.QtGui import QDoubleValidator, QRegExpValidator
-from python_qt_binding.QtCore import QRegExp
+from python_qt_binding.QtCore import QRegExp, Qt
 
 import unicodedata
 
@@ -20,6 +20,7 @@ class WidgetBlackboard(QFrame):
 
         # ---- Add item button ----
         self.add_item_button = QPushButton("Add value")
+        self.add_item_button.setFocusPolicy(Qt.ClickFocus)
         self.layout().addWidget(self.add_item_button, 0, 1, 1, 3)
         self.add_item_button.clicked.connect(self.slot_add_item)
         # ---- /Add item button ----
@@ -145,6 +146,7 @@ class BlackboardItem():
         self.type_widget.insertItem(1, "Double")
         self.type_widget.insertItem(2, "Int")
         self.type_widget.insertItem(3, "Bool")
+        self.type_widget.setFocusPolicy(Qt.ClickFocus)
 
         # ---- Value widget ----
 
@@ -175,7 +177,9 @@ class BlackboardItem():
         # ---- /Value widget ----
 
         self.name_widget = QLineEdit()
+
         self.remove_widget = QPushButton("x")
+        self.remove_widget.setFocusPolicy(Qt.ClickFocus)
         self.remove_widget.setMinimumWidth(20)
         self.remove_widget.setSizePolicy(self.remove_widget.sizePolicy().Preferred, self.remove_widget.sizePolicy().Fixed)
 
