@@ -6,6 +6,7 @@ from python_qt_binding.QtCore import pyqtSignal, Qt
 class FieldGraphicsScene(QGraphicsScene):
 
     right_click_signal = pyqtSignal(QGraphicsSceneMouseEvent)
+    left_click_signal = pyqtSignal(QGraphicsSceneMouseEvent)
     mouse_move_signal = pyqtSignal(QGraphicsSceneMouseEvent)
 
     def __init__(self):
@@ -20,6 +21,12 @@ class FieldGraphicsScene(QGraphicsScene):
             self.right_click_signal.emit(event)
             event.accept()
             return
+
+        if (event.button() == Qt.LeftButton):
+            # Emit the right click signal.
+            self.left_click_signal.emit(event)
+            event.accept()
+            # return
 
         # Process everything else the default way.
         super(FieldGraphicsScene, self).mousePressEvent(event)

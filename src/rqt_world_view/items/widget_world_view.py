@@ -1,3 +1,5 @@
+import sys
+
 from python_qt_binding.QtWidgets import QGraphicsItem, QFrame, QHBoxLayout, QVBoxLayout, QGraphicsRectItem, QGraphicsItemGroup, QGraphicsEllipseItem, QGraphicsLineItem, QPushButton, QLabel
 from python_qt_binding import QtGui, QtCore
 from python_qt_binding.QtCore import pyqtSignal
@@ -140,6 +142,7 @@ class WidgetWorldView(QFrame):
 
         # Connect the scenes right clicks.
         self.scene.right_click_signal.connect(self.slot_scene_right_clicked)
+        self.scene.left_click_signal.connect(self.slot_scene_left_clicked)
 
         # Enable antialiasing.
         self.fieldview.setRenderHints(QtGui.QPainter.Antialiasing)
@@ -183,6 +186,9 @@ class WidgetWorldView(QFrame):
 
         # Open a connection to grsim.
         self.grsim = GrsimConnector()
+
+        # Process handle for the TestX programm.
+        self.testx_thread = None
 
 
     def update_world_state(self, message):
@@ -477,6 +483,53 @@ class WidgetWorldView(QFrame):
 
         if not placed_a_robot:
             self.grsim.place_ball(pos_x, pos_y)
+
+
+    def slot_scene_left_clicked(self, event):
+        """To be called when the field scene is left clicked."""
+        
+        pos_x = event.scenePos().x()
+        pos_y = -(event.scenePos().y())
+
+        selected_robot = -1
+        for bot_id, robot in self.robots_us.iteritems():
+            if robot.isSelected():
+                selected_robot = bot_id
+
+        for bot_id, robot in self.robots_them.iteritems():
+            if robot.isSelected():
+                selected_robot = bot_id
+
+        if selected_robot < 0:
+            return
+
+        if self.is_test_running():
+            # Ask the testx thread to stop.
+            self.testx_thread.stop()
+
+        command = ["rosrun", "roboteam_tactics", "TestX", "GoToPos"]
+        command.append("int:ROBOT_ID=" + str(selected_robot))
+        command.append("double:xGoal=" + str( utils.mm_to_m(pos_x) ))
+        command.append("double:yGoal=" + str( utils.mm_to_m(pos_y) ))
+        print command
+
+        # Start the test.
+        self.testx_thread = utils.popen_and_call(self.on_exit, command, stdout=sys.stdout)
+
+    def on_exit(self):
+        return
+
+    def is_test_running(self):
+        """
+        Checks whether the testx process is running.
+        Returns true for running, false for not running or nonexistent.
+        """
+        if self.testx_thread:
+            if self.testx_thread.isAlive():
+                # The test is still running.
+                return True
+        # Fell through, test is not running.
+        return False
 
 
     def slot_scene_mouse_moved(self, event):
