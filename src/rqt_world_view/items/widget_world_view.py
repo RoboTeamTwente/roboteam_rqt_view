@@ -511,6 +511,7 @@ class WidgetWorldView(QFrame):
         command.append("int:ROBOT_ID=" + str(selected_robot))
         command.append("double:xGoal=" + str( utils.mm_to_m(pos_x) ))
         command.append("double:yGoal=" + str( utils.mm_to_m(pos_y) ))
+        command.append("double:angleGoal=0.0")
         print command
 
         # Start the test.
