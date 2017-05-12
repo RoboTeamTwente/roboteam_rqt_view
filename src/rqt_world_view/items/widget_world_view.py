@@ -1,6 +1,6 @@
 import sys
 
-from python_qt_binding.QtWidgets import QGraphicsItem, QFrame, QHBoxLayout, QVBoxLayout, QGraphicsRectItem, QGraphicsItemGroup, QGraphicsEllipseItem, QGraphicsLineItem, QPushButton, QLabel
+from python_qt_binding.QtWidgets import QApplication, QGraphicsItem, QFrame, QHBoxLayout, QVBoxLayout, QGraphicsRectItem, QGraphicsItemGroup, QGraphicsEllipseItem, QGraphicsLineItem, QPushButton, QLabel
 from python_qt_binding import QtGui, QtCore
 from python_qt_binding.QtCore import pyqtSignal
 
@@ -469,52 +469,53 @@ class WidgetWorldView(QFrame):
         pos_x = event.scenePos().x() * normalize_value
         pos_y = -(event.scenePos().y() * normalize_value)
 
-        placed_a_robot = False
+        selected_robot = -1
+
+        # Get the keyboard modifiers.
+        key_modifiers = QApplication.keyboardModifiers()
+        shift_pressed = key_modifiers & QtCore.Qt.ShiftModifier
 
         for bot_id, robot in self.robots_us.iteritems():
             if robot.isSelected():
-                self.grsim.place_robot(bot_id, True, pos_x, pos_y)
-                placed_a_robot = True
+                selected_robot = bot_id
+
+                if not shift_pressed:
+                    # Send a command to grsim to teleport the robot.
+                    self.grsim.place_robot(selected_robot, True, pos_x, pos_y)
+                else:
+                    # Start GoToPos with the selected robot.
+
+                    if self.is_test_running():
+                        # Ask the testx thread to stop.
+                        self.testx_thread.stop()
+
+                    command = ["rosrun", "roboteam_tactics", "TestX", "GoToPos"]
+                    command.append("int:ROBOT_ID=" + str(selected_robot))
+                    # Positions need to be re-normalized. Because the test skills are expecting normalized positions.
+                    command.append("double:xGoal=" + str( utils.mm_to_m(pos_x * normalize_value) ))
+                    command.append("double:yGoal=" + str( utils.mm_to_m(pos_y * normalize_value) ))
+                    print command
+
+                    # Start the test.
+                    self.testx_thread = utils.popen_and_call(self.on_exit, command, stdout=sys.stdout)
+
 
         for bot_id, robot in self.robots_them.iteritems():
             if robot.isSelected():
-                self.grsim.place_robot(bot_id, False, pos_x, pos_y)
-                placed_a_robot = True
+                selected_robot = bot_id
 
-        if not placed_a_robot:
+                if not shift_pressed:
+                    # Send a command to grsim to teleport the robot.
+                    self.grsim.place_robot(selected_robot, False, pos_x, pos_y)
+
+
+        if selected_robot < 0:
             self.grsim.place_ball(pos_x, pos_y)
 
 
     def slot_scene_left_clicked(self, event):
         """To be called when the field scene is left clicked."""
-        
-        pos_x = event.scenePos().x()
-        pos_y = -(event.scenePos().y())
-
-        selected_robot = -1
-        for bot_id, robot in self.robots_us.iteritems():
-            if robot.isSelected():
-                selected_robot = bot_id
-
-        for bot_id, robot in self.robots_them.iteritems():
-            if robot.isSelected():
-                selected_robot = bot_id
-
-        if selected_robot < 0:
-            return
-
-        if self.is_test_running():
-            # Ask the testx thread to stop.
-            self.testx_thread.stop()
-
-        command = ["rosrun", "roboteam_tactics", "TestX", "GoToPos"]
-        command.append("int:ROBOT_ID=" + str(selected_robot))
-        command.append("double:xGoal=" + str( utils.mm_to_m(pos_x) ))
-        command.append("double:yGoal=" + str( utils.mm_to_m(pos_y) ))
-        print command
-
-        # Start the test.
-        self.testx_thread = utils.popen_and_call(self.on_exit, command, stdout=sys.stdout)
+        pass
 
     def on_exit(self):
         return
