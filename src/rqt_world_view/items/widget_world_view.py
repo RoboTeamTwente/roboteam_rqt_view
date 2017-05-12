@@ -508,11 +508,6 @@ class WidgetWorldView(QFrame):
                     # Send a command to grsim to teleport the robot.
                     self.grsim.place_robot(selected_robot, False, pos_x, pos_y)
 
-
-        if selected_robot < 0:
-            self.grsim.place_ball(pos_x, pos_y)
-
-
     def slot_scene_left_clicked(self, event):
         """To be called when the field scene is left clicked."""
         pass
