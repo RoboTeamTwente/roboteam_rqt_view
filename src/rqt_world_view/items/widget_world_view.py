@@ -1,6 +1,6 @@
 import sys
 
-from python_qt_binding.QtWidgets import QApplication, QGraphicsItem, QFrame, QHBoxLayout, QVBoxLayout, QGraphicsRectItem, QGraphicsItemGroup, QGraphicsEllipseItem, QGraphicsLineItem, QPushButton, QLabel
+from python_qt_binding.QtWidgets import QApplication, QGraphicsItem, QFrame, QHBoxLayout, QVBoxLayout, QGraphicsRectItem, QGraphicsItemGroup, QGraphicsEllipseItem, QGraphicsLineItem, QPushButton, QLabel, QAction, QShortcut
 from python_qt_binding import QtGui, QtCore
 from python_qt_binding.QtCore import pyqtSignal
 
@@ -51,6 +51,11 @@ class WidgetWorldView(QFrame):
         self.them_color = them_color
 
         self.field_normalized = False
+
+        # Mouse position on the field.
+        self.field_mouse_x = 0
+        self.field_mouse_y = 0
+
 
         self.field_background = QGraphicsRectItem(-self.field_width/2, -self.field_length/2, self.field_width, self.field_length)
         self.field_background.setZValue(-10)
@@ -175,8 +180,17 @@ class WidgetWorldView(QFrame):
 
         # ---- Info labels ----
 
-        self.lbl_cursor_info = QLabel("0, 0")
-        self.layout().addWidget(self.lbl_cursor_info)
+        self.info_layout = QHBoxLayout()
+        self.layout().addLayout(self.info_layout)
+
+        self.cursor_info_label = QLabel("0, 0")
+        self.cursor_info_label.setMinimumWidth(100)
+        self.info_layout.addWidget(self.cursor_info_label)
+
+        self.copy_instruction_label = QLabel("Double click field to copy coordinates.")
+        self.info_layout.addWidget(self.copy_instruction_label)
+
+        self.info_layout.addStretch(1)
 
         # ---- /Info labels ----
 
@@ -540,10 +554,23 @@ class WidgetWorldView(QFrame):
         if self.field_normalized:
             normalize_value = -1
 
-        self.lbl_cursor_info.setText(
-            str(round(utils.mm_to_m(event.scenePos().x() * normalize_value), 2)) + ", " +
-            str(round(utils.mm_to_m(-(event.scenePos().y() * normalize_value)), 2))
+        self.field_mouse_x = round(utils.mm_to_m(event.scenePos().x() * normalize_value), 2)
+        self.field_mouse_y = round(utils.mm_to_m(-(event.scenePos().y() * normalize_value)), 2)
+
+        self.cursor_info_label.setText(
+            str(self.field_mouse_x) + ", " +
+            str(self.field_mouse_y)
             )
+
+
+    def slot_copy_coordinates_to_clipboard(self):
+        QApplication.clipboard().setText(
+            (str(self.field_mouse_x) + ", " +
+            str(self.field_mouse_y))
+            )
+
+    def mouseDoubleClickEvent(self, event):
+        self.slot_copy_coordinates_to_clipboard()
 
     # --------------------------------------------------------------------------
     # ---- Toolbar slots -------------------------------------------------------
@@ -583,7 +610,7 @@ class WidgetWorldView(QFrame):
 
     def halt_update(self, message):
         """
-        Calt when something updates the halt state. Maks the halt button red/ordinary and
+        Called when something updates the halt state. Maks the halt button red/ordinary and
         changes the text as well.
         """
         self.is_halting = message.data
