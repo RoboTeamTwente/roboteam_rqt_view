@@ -11,6 +11,7 @@ from rqt_world_view.utils import utils
 from rqt_world_view.utils.grsim_connector import GrsimConnector
 from graphics_robot import GraphicsRobot
 from qgraphics_arc_item import QGraphicsArcItem
+from item_debug_point import ItemDebugPoint
 
 from std_msgs import msg as std_msg
 
@@ -204,6 +205,15 @@ class WidgetWorldView(QFrame):
         # Process handle for the TestX programm.
         self.testx_thread = None
 
+        # Ui update timer.
+        self.ui_update_timer = QtCore.QTimer()
+        self.ui_update_timer.timeout.connect(self.update_scene)
+        self.ui_update_timer.start(100) # Update every x millisecconds.
+
+
+    def update_scene(self):
+        self.scene.update(self.fieldview.sceneRect())
+
 
     def update_world_state(self, message):
         """
@@ -393,41 +403,21 @@ class WidgetWorldView(QFrame):
         """Expects a `roboteam_msgs.DebugPoint` point."""
         if not point.name in self.debug_points:
             if not point.remove:
-                self.add_debug_point(point)
+                new_point = ItemDebugPoint()
+                point_color = QtGui.QColor(point.color.r, point.color.g, point.color.b)
+                new_point.set_color(point_color)
+                new_point.set_pos(utils.m_to_mm(point.pos.x), utils.m_to_mm(point.pos.y))
+                new_point.setParentItem(self.debug_point_parent)
+                self.debug_points[point.name] = new_point
         else:
-            for item in self.debug_points[point.name].childItems():
-                self.debug_points[point.name].removeFromGroup(item)
-                self.scene.removeItem(item)
-            del self.debug_points[point.name]
-
             if not point.remove:
-                self.add_debug_point(point)
-
-    def add_debug_point(self, point):
-        line_pen = QtGui.QPen()
-        line_pen.setColor(QtGui.QColor(point.color.r, point.color.g, point.color.b))
-        line_pen.setWidth(15)
-
-        size = 100
-
-        crosshair = QGraphicsItemGroup()
-        crosshair.setParentItem(self.debug_point_parent)
-
-        # Create a crosshair at the indicated location.
-        h_line = QGraphicsLineItem(
-            -size, 0,
-            size, 0)
-        h_line.setPen(line_pen)
-        crosshair.addToGroup(h_line)
-
-        v_line = QGraphicsLineItem(
-            0, -size,
-            0, size)
-        v_line.setPen(line_pen)
-        crosshair.addToGroup(v_line)
-
-        self.debug_points[point.name] = crosshair
-        crosshair.setPos(utils.m_to_mm(point.pos.x), -utils.m_to_mm(point.pos.y))
+                point_color = QtGui.QColor(point.color.r, point.color.g, point.color.b)
+                point_item = self.debug_points[point.name]
+                point_item.set_color(point_color)
+                point_item.set_pos(utils.m_to_mm(point.pos.x), utils.m_to_mm(point.pos.y))
+            else:
+                self.scene.removeItem(self.debug_points[point.name])
+                del self.debug_points[point.name]
 
 
     def set_debug_line(self, line):
@@ -597,9 +587,7 @@ class WidgetWorldView(QFrame):
 
     def clear_debug_drawings(self):
         for name in self.debug_points.keys():
-            for item in self.debug_points[name].childItems():
-                self.debug_points[name].removeFromGroup(item)
-                self.scene.removeItem(item)
+            self.scene.removeItem(self.debug_points[name])
             del self.debug_points[name]
 
         for name in self.debug_lines.keys():
