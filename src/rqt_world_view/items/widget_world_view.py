@@ -406,7 +406,7 @@ class WidgetWorldView(QFrame):
                 new_point = ItemDebugPoint()
                 point_color = QtGui.QColor(point.color.r, point.color.g, point.color.b)
                 new_point.set_color(point_color)
-                new_point.set_pos(utils.m_to_mm(point.pos.x), utils.m_to_mm(point.pos.y))
+                new_point.set_pos(utils.m_to_mm(point.pos.x), -utils.m_to_mm(point.pos.y))
                 new_point.setParentItem(self.debug_point_parent)
                 self.debug_points[point.name] = new_point
         else:
@@ -414,7 +414,7 @@ class WidgetWorldView(QFrame):
                 point_color = QtGui.QColor(point.color.r, point.color.g, point.color.b)
                 point_item = self.debug_points[point.name]
                 point_item.set_color(point_color)
-                point_item.set_pos(utils.m_to_mm(point.pos.x), utils.m_to_mm(point.pos.y))
+                point_item.set_pos(utils.m_to_mm(point.pos.x), -utils.m_to_mm(point.pos.y))
             else:
                 self.scene.removeItem(self.debug_points[point.name])
                 del self.debug_points[point.name]
