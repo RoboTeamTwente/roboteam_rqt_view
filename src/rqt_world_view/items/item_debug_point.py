@@ -20,12 +20,12 @@ class ItemDebugPoint(QtWidgets.QGraphicsItemGroup):
         self.pen.setWidth(CROSSHAIR_PEN_WIDTH)
 
     def set_pos(self, x, y):
-        self.pos_x = x
-        self.pos_y = y
-        self.left_edge = x - CROSSHAIR_EXTENSION
-        self.right_edge = x + CROSSHAIR_EXTENSION
-        self.top_edge = y - CROSSHAIR_EXTENSION
-        self.bottom_edge = y + CROSSHAIR_EXTENSION
+        self.pos_x = int(x)
+        self.pos_y = int(y)
+        self.left_edge = int(x - CROSSHAIR_EXTENSION)
+        self.right_edge = int(x + CROSSHAIR_EXTENSION)
+        self.top_edge = int(y - CROSSHAIR_EXTENSION)
+        self.bottom_edge = int(y + CROSSHAIR_EXTENSION)
 
     def set_color(self, color):
         self.pen.setColor(color)
