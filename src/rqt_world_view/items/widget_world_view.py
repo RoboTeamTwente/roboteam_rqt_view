@@ -401,6 +401,9 @@ class WidgetWorldView(QFrame):
 
     def set_debug_point(self, point):
         """Expects a `roboteam_msgs.DebugPoint` point."""
+        if not point.pos:
+            return
+
         if not point.name in self.debug_points:
             if not point.remove:
                 new_point = ItemDebugPoint()
