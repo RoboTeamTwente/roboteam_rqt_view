@@ -1,4 +1,5 @@
 import os
+import json
 import rospy
 import roslib
 roslib.load_manifest("roboteam_msgs")
@@ -26,6 +27,10 @@ THEM_COLOR = QtGui.QColor(127, 84, 147) # The color of the opponents robots.
 
 # Milliseconds to wait for a vision packet before assuming it has stopped.
 VISION_TIMEOUT_TIME = 2000
+
+
+SIDEBAR_PROPORTIONS_SETTINGS_NAME = "sidebar_proportions"
+TOPBAR_PROPORTIONS_SETTINGS_NAME = "topbar_proportions"
 
 
 class WorldViewPlugin(Plugin):
@@ -204,12 +209,32 @@ class WorldViewPlugin(Plugin):
     def save_settings(self, plugin_settings, instance_settings):
         # TODO save intrinsic configuration, usually using:
         # instance_settings.set_value(k, v)
-        pass
+
+        topbar_proportions = self.vertical_splitter.sizes()
+        sidebar_proportions = self.horizontal_splitter.sizes()
+
+        instance_settings.set_value(SIDEBAR_PROPORTIONS_SETTINGS_NAME, json.dumps(sidebar_proportions))
+        instance_settings.set_value(TOPBAR_PROPORTIONS_SETTINGS_NAME, json.dumps(topbar_proportions))
 
     def restore_settings(self, plugin_settings, instance_settings):
         # TODO restore intrinsic configuration, usually using:
         # v = instance_settings.value(k)
-        pass
+
+        sidebar_proportions_string = instance_settings.value(SIDEBAR_PROPORTIONS_SETTINGS_NAME)
+
+        try:
+            proportions = json.loads(sidebar_proportions_string)
+            self.horizontal_splitter.setSizes(proportions)
+        except ValueError, TypeError:
+            print >> sys.stderr, "Warning: World view couldn't load configuration: \"" + sidebar_proportions_string + "\""
+
+        topbar_proportions_string = instance_settings.value(TOPBAR_PROPORTIONS_SETTINGS_NAME)
+
+        try:
+            proportions = json.loads(topbar_proportions_string)
+            self.vertical_splitter.setSizes(proportions)
+        except ValueError, TypeError:
+            print >> sys.stderr, "Warning: World view couldn't load configuration: \"" + topbar_proportions_string + "\""
 
     #def trigger_configuration(self):
         # Comment in to signal that the plugin has a way to configure
