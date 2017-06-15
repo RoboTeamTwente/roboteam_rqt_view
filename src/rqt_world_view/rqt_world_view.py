@@ -17,6 +17,7 @@ from items.widget_world_view import WidgetWorldView
 from items.widget_scoreboard import WidgetScoreboard
 from items.widget_skill_tester import WidgetSkillTester
 from items.widget_multi_skill_tester import WidgetMultiSkillTester
+from items.widget_toolbar import WidgetToolbar
 
 FIELD_COLOR = QtGui.QColor(0, 200, 50)
 FIELD_LINE_COLOR = QtGui.QColor(255, 255, 255)
@@ -86,6 +87,12 @@ class WorldViewPlugin(Plugin):
         # Add widget to the user interface
         context.add_widget(self.widget)
 
+        # ---- Data ----
+
+        self.is_halting = False
+
+        # ---- /Data ----
+
         # ---- Subscribers ----
 
         # Subscribe to the world state.
@@ -121,6 +128,9 @@ class WorldViewPlugin(Plugin):
 
         self.widget.setLayout(QVBoxLayout())
 
+        self.toolbar = WidgetToolbar()
+        self.widget.layout().addWidget(self.toolbar)
+
         self.vertical_splitter = QSplitter(Qt.Vertical)
         self.widget.layout().addWidget(self.vertical_splitter)
 
@@ -131,7 +141,7 @@ class WorldViewPlugin(Plugin):
 
         # ---- World viewer ----
 
-        self.world_view = WidgetWorldView(US_COLOR, THEM_COLOR, self.halt_pub)
+        self.world_view = WidgetWorldView(US_COLOR, THEM_COLOR)
 
         self.horizontal_splitter.addWidget(self.world_view)
 
@@ -190,6 +200,12 @@ class WorldViewPlugin(Plugin):
         self.debug_line_signal.connect(self.slot_debug_line)
 
         self.halt_update_signal.connect(self.slot_halt_update)
+
+        # Toolbar connections.
+        self.toolbar.out_of_field_button.clicked.connect(self.world_view.put_robots_out_of_field)
+        self.toolbar.toggle_halt_button.clicked.connect(self.toggle_halt)
+        self.toolbar.reset_view_button.clicked.connect(self.world_view.reset_view)
+        self.toolbar.clear_debug_button.clicked.connect(self.world_view.clear_debug_drawings)
 
         # ---- /Signal connections ----
 
@@ -278,7 +294,7 @@ class WorldViewPlugin(Plugin):
         self.vision_timer.start()
 
         if self.has_vision_connection == False:
-            self.world_view.set_vision_status_indicator(True)
+            self.toolbar.set_vision_status_indicator(True)
             self.has_vision_connection = True
 
 
@@ -296,10 +312,21 @@ class WorldViewPlugin(Plugin):
         self.world_view.set_debug_line(message)
 
     def slot_halt_update(self, message):
-        self.world_view.halt_update(message)
+        self.is_halting = message.data
+        self.toolbar.halt_update(message)
 
 
     def slot_vision_lost(self):
         """Call when there hasn't been a packet from vision for a while."""
-        self.world_view.set_vision_status_indicator(False)
+        self.toolbar.set_vision_status_indicator(False)
         self.has_vision_connection = False
+
+    def toggle_halt(self):
+        """
+        Called when the halt button is pressed. Sends an opposite halt command of the currently
+        known halt state.
+        """
+        message = std_msg.Bool()
+        message.data = not self.is_halting
+
+        self.halt_pub.publish(message)

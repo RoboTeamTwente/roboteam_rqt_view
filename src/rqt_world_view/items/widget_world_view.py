@@ -12,7 +12,6 @@ from rqt_world_view.utils.grsim_connector import GrsimConnector
 from graphics_robot import GraphicsRobot
 from qgraphics_arc_item import QGraphicsArcItem
 from item_debug_point import ItemDebugPoint
-from dialog_field_transformation import DialogFieldTransformation
 
 from std_msgs import msg as std_msg
 
@@ -33,16 +32,12 @@ BALL_COLOR = QtGui.QColor(255, 100, 0)
 class WidgetWorldView(QFrame):
     """Displays the current world state."""
 
-    def __init__(self, us_color, them_color, halt_pub):
+    def __init__(self, us_color, them_color):
         """
         us_color: QColor() -- The color to use for our robots.
         them_color: QColor() -- The color to use for their robots.
         """
         super(WidgetWorldView, self).__init__()
-
-        # Stuff needed to halt properly
-        self.halt_pub = halt_pub
-        self.is_halting = False
 
         # Field size in mm.
         self.field_width = 9000
@@ -110,41 +105,6 @@ class WidgetWorldView(QFrame):
         self.setLayout(QVBoxLayout())
 
         self.setContentsMargins(0, 0, 0, 0)
-
-        # ---- Toolbar initialization ----
-
-        self.toolbar = QFrame()
-        self.toolbar.setLayout(QHBoxLayout())
-        self.toolbar.setContentsMargins(0, 0, 0, 0)
-        self.layout().addWidget(self.toolbar)
-
-        self.vision_status_indicator = QLabel("Vision status")
-        self.vision_status_indicator.setAlignment(QtCore.Qt.AlignCenter)
-        self.toolbar.layout().addWidget(self.vision_status_indicator)
-
-        self.out_of_field_button = QPushButton("Put all out of field")
-        self.toolbar.layout().addWidget(self.out_of_field_button)
-        self.out_of_field_button.clicked.connect(self.out_of_field_button_pressed)
-
-        self.reset_view_button = QPushButton("Reset view")
-        self.toolbar.layout().addWidget(self.reset_view_button)
-        self.reset_view_button.clicked.connect(self.reset_view)
-
-        self.clear_debug_button = QPushButton("Clear debug drawings")
-        self.toolbar.layout().addWidget(self.clear_debug_button)
-        self.clear_debug_button.clicked.connect(self.clear_debug_drawings)
-
-        self.transformation_modal_button = QPushButton("Config!")
-        self.toolbar.layout().addWidget(self.transformation_modal_button)
-        self.transformation_modal_button.clicked.connect(self.open_field_transformation_modal)
-
-        self.toggle_halt_button = QPushButton("Press to halt")
-        self.toolbar.layout().addWidget(self.toggle_halt_button)
-        self.toggle_halt_button.clicked.connect(self.toggle_halt)
-
-        # ---- /Toolbar initialization ----
-
-        self.field_transformation_dialog = DialogFieldTransformation()
 
         # ---- Field view initialization ----
 
@@ -576,7 +536,7 @@ class WidgetWorldView(QFrame):
     # ---- Toolbar slots -------------------------------------------------------
     # --------------------------------------------------------------------------
 
-    def out_of_field_button_pressed(self):
+    def put_robots_out_of_field(self):
         """Places all the robots outside the field."""
         for bot_id, robot in self.robots_us.iteritems():
             x = (BOT_DIAMETER * 2 * (bot_id + 1))
@@ -605,38 +565,3 @@ class WidgetWorldView(QFrame):
                 self.debug_lines[name].removeFromGroup(item)
                 self.scene.removeItem(item)
             del self.debug_lines[name]
-
-    def halt_update(self, message):
-        """
-        Called when something updates the halt state. Maks the halt button red/ordinary and
-        changes the text as well.
-        """
-        self.is_halting = message.data
-
-        if self.is_halting:
-            self.toggle_halt_button.setStyleSheet('QPushButton {background-color: #FF0000;}')
-            self.toggle_halt_button.setText("Halting")
-        else:
-            self.toggle_halt_button.setStyleSheet('QPushButton {}')
-            self.toggle_halt_button.setText("Not halting")
-
-    def toggle_halt(self):
-        """
-        Called when the halt button is pressed. Sends an opposite halt command of the currently
-        known halt state.
-        """
-        message = std_msg.Bool()
-        message.data = not self.is_halting
-
-        self.halt_pub.publish(message)
-
-
-    def set_vision_status_indicator(self, status):
-        if status == True:
-            self.vision_status_indicator.setStyleSheet("color: #00aa00")
-        else:
-            self.vision_status_indicator.setStyleSheet("color: #FF0000")
-
-    def open_field_transformation_modal(self):
-        self.field_transformation_dialog.show()
-        self.field_transformation_dialog.activateWindow()
