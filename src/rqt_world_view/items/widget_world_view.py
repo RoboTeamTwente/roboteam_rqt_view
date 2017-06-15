@@ -12,6 +12,7 @@ from rqt_world_view.utils.grsim_connector import GrsimConnector
 from graphics_robot import GraphicsRobot
 from qgraphics_arc_item import QGraphicsArcItem
 from item_debug_point import ItemDebugPoint
+from dialog_field_transformation import DialogFieldTransformation
 
 from std_msgs import msg as std_msg
 
@@ -133,11 +134,17 @@ class WidgetWorldView(QFrame):
         self.toolbar.layout().addWidget(self.clear_debug_button)
         self.clear_debug_button.clicked.connect(self.clear_debug_drawings)
 
+        self.transformation_modal_button = QPushButton("Config!")
+        self.toolbar.layout().addWidget(self.transformation_modal_button)
+        self.transformation_modal_button.clicked.connect(self.open_field_transformation_modal)
+
         self.toggle_halt_button = QPushButton("Press to halt")
         self.toolbar.layout().addWidget(self.toggle_halt_button)
         self.toggle_halt_button.clicked.connect(self.toggle_halt)
 
         # ---- /Toolbar initialization ----
+
+        self.field_transformation_dialog = DialogFieldTransformation()
 
         # ---- Field view initialization ----
 
@@ -629,3 +636,7 @@ class WidgetWorldView(QFrame):
             self.vision_status_indicator.setStyleSheet("color: #00aa00")
         else:
             self.vision_status_indicator.setStyleSheet("color: #FF0000")
+
+    def open_field_transformation_modal(self):
+        self.field_transformation_dialog.show()
+        self.field_transformation_dialog.activateWindow()
