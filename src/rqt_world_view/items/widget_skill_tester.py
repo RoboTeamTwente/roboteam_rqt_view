@@ -84,6 +84,30 @@ class WidgetSkillTester(QtWidgets.QFrame):
         self.test_stopped_signal.connect(self.slot_on_test_exit)
 
 
+    def get_state(self):
+        """
+        This implementation with a dict works but is quite ugly, as it requires
+        carefull coordination of the get and set methods.
+        A better (but more involved) implementation would probably be to use a
+        state object.
+        """
+        state = dict()
+        state["id"] = self.id_entry.text()
+        state["skill"] = self.skill_entry.text()
+
+        state["blackboard"] = self.blackboard.get_state()
+
+        return state
+
+    def set_state(self, state):
+        try:
+            self.id_entry.setText(state["id"])
+            self.skill_entry.setText(state["skill"])
+            self.blackboard.set_state(state["blackboard"])
+        except KeyError:
+            print >> sys.stderr, "Warning: Skill tester couldn't parse state: \"" + str(state) + "\""
+
+
     def remove_child_widgets(self):
         """Called before cleaning the tester up. Makes sure there are no child wigets floating around."""
         self.test_button.deleteLater()

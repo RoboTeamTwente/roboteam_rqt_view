@@ -70,6 +70,19 @@ class WidgetMultiSkillTester(QtWidgets.QFrame):
         self.testers[tester_id].deleteLater()
         del self.testers[tester_id]
 
+
+    def get_state(self):
+        state = []
+        for tester_id, tester in self.testers.items():
+            state.append(tester.get_state())
+
+        return state
+
+    def set_state(self, state):
+        for tester_state in state:
+            tester = self.slot_add_tester()
+            tester.set_state(tester_state)
+
 # ------------------------------------------------------------------------------
 # ---------- Button slots ------------------------------------------------------
 # ------------------------------------------------------------------------------
@@ -86,6 +99,8 @@ class WidgetMultiSkillTester(QtWidgets.QFrame):
         self.testers[self.next_tester_id] = tester
 
         self.next_tester_id += 1
+
+        return tester
 
     def slot_start_all(self):
         for key, tester in self.testers.iteritems():

@@ -1,4 +1,5 @@
 import os
+import sys
 import json
 import rospy
 import roslib
@@ -32,6 +33,7 @@ VISION_TIMEOUT_TIME = 2000
 
 SIDEBAR_PROPORTIONS_SETTINGS_NAME = "sidebar_proportions"
 TOPBAR_PROPORTIONS_SETTINGS_NAME = "topbar_proportions"
+SKILL_TESTER_STATE_NAME = "skill_tester_state"
 
 
 class WorldViewPlugin(Plugin):
@@ -211,7 +213,6 @@ class WorldViewPlugin(Plugin):
 
 
     def shutdown_plugin(self):
-        # TODO unregister all publishers here
         self.strategy_ignore_topic.unregister()
         self.halt_pub.unregister()
 
@@ -232,6 +233,8 @@ class WorldViewPlugin(Plugin):
         instance_settings.set_value(SIDEBAR_PROPORTIONS_SETTINGS_NAME, json.dumps(sidebar_proportions))
         instance_settings.set_value(TOPBAR_PROPORTIONS_SETTINGS_NAME, json.dumps(topbar_proportions))
 
+        instance_settings.set_value(SKILL_TESTER_STATE_NAME, json.dumps(self.multi_skill_tester.get_state()))
+
     def restore_settings(self, plugin_settings, instance_settings):
         # TODO restore intrinsic configuration, usually using:
         # v = instance_settings.value(k)
@@ -251,6 +254,14 @@ class WorldViewPlugin(Plugin):
             self.vertical_splitter.setSizes(proportions)
         except ValueError, TypeError:
             print >> sys.stderr, "Warning: World view couldn't load configuration: \"" + topbar_proportions_string + "\""
+
+        skill_tester_state_string = instance_settings.value(SKILL_TESTER_STATE_NAME)
+
+        try:
+            skill_tester_state = json.loads(skill_tester_state_string)
+            self.multi_skill_tester.set_state(skill_tester_state)
+        except ValueError, TypeError:
+            print >> sys.stderr, "Warning: World view couldn't load configuration: \"" + skill_tester_state_string + "\""
 
     #def trigger_configuration(self):
         # Comment in to signal that the plugin has a way to configure

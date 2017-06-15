@@ -42,6 +42,22 @@ class WidgetBlackboard(QFrame):
         # ---- /Setup table ----
 
 
+    def get_state(self):
+        state = []
+
+        for item_id, item in self.blackboard_items.items():
+            item_state = item.get_state()
+            state.append(item_state)
+
+        return state
+
+
+    def set_state(self, state):
+        for item_state in state:
+            item = self.slot_add_item()
+            item.set_state(item_state)
+
+
     def get_blackboard_message(self):
         """Returns the values in this blackboard in the form of a Blackboard.msg"""
 
@@ -106,6 +122,8 @@ class WidgetBlackboard(QFrame):
 
         self.new_item_id += 1
         self.insert_row += 1
+
+        return item
 
 
     def slot_remove_item(self, item_id):
@@ -187,6 +205,42 @@ class BlackboardItem():
 
         self.remove_widget.clicked.connect(self.slot_remove_widget_pressed)
         self.type_widget.currentIndexChanged.connect(self.slot_type_selection_changed)
+
+
+    def get_state(self):
+        state = dict()
+        typestring = self.type_widget.currentText()
+
+        state["typestring"] = typestring
+        state["name"] = self.name_widget.text()
+
+        if typestring == "String":
+            state["value"] = self.string_edit.text()
+        elif typestring == "Int":
+            state["value"] = self.int_edit.text()
+        elif typestring == "Double":
+            state["value"] = self.double_edit.text()
+        elif typestring == "Bool":
+            state["value"] = self.bool_edit.isChecked()
+
+        return state
+
+
+    def set_state(self, state):
+        typestring = state["typestring"]
+        self.type_widget.setCurrentText(typestring)
+
+        self.name_widget.setText(state["name"])
+
+        if typestring == "String":
+            self.string_edit.setText(state["value"])
+        elif typestring == "Int":
+            self.int_edit.setText(state["value"])
+        elif typestring == "Double":
+            self.double_edit.setText(state["value"])
+        elif typestring == "Bool":
+            checked = bool(state["value"])
+            self.bool_edit.setChecked(checked)
 
 
     def get_entry_message(self):
