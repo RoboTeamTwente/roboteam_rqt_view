@@ -62,6 +62,7 @@ class WidgetWorldView(QFrame):
 
         self.ball = QGraphicsEllipseItem(0, 0, BALL_DIAMETER, BALL_DIAMETER)
         self.ball.setBrush(QtGui.QBrush(BALL_COLOR))
+        self.ball.setPen(QtGui.QPen(QtCore.Qt.NoPen))
 
         self.field_lines = QGraphicsItemGroup()
         self.field_lines.setZValue(-5)
