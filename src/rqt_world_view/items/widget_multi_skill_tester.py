@@ -53,7 +53,7 @@ class WidgetMultiSkillTester(QtWidgets.QFrame):
         # This shouldn't be necessary.
         # A scroll area with no horizontal scroll bar should automatically resize to the minimum size of it's contents.
         # It doesn't, so this arbitrary width is needed.
-        self.scroll_area.setMinimumWidth(300)
+        self.scroll_area.setMinimumWidth(250)
 
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
