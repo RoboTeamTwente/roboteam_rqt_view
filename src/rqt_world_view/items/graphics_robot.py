@@ -1,11 +1,12 @@
-from python_qt_binding import QtGui
-from python_qt_binding.QtWidgets import QGraphicsWidget, QGraphicsItem, QGraphicsItemGroup, QGraphicsEllipseItem, QGraphicsLineItem, QGraphicsTextItem
-
+from python_qt_binding import QtGui, QtCore
+from python_qt_binding.QtWidgets import QGraphicsItem
 
 BOT_DIAMETER = 180 # Diameter of the bots in mm.
+SELECTION_WIDTH = 15
+BOT_BODY_RECT = QtCore.QRectF(-BOT_DIAMETER/2, -BOT_DIAMETER/2, BOT_DIAMETER, BOT_DIAMETER)
+BOUNDING_RECT = QtCore.QRectF(-BOT_DIAMETER/2 - SELECTION_WIDTH/2, -BOT_DIAMETER/2 - SELECTION_WIDTH/2, BOT_DIAMETER + SELECTION_WIDTH, BOT_DIAMETER + SELECTION_WIDTH)
 
-
-class GraphicsRobot(QGraphicsItemGroup):
+class GraphicsRobot(QGraphicsItem):
 
     def __init__(self, bot_id, is_us, color, font):
         """
@@ -23,42 +24,17 @@ class GraphicsRobot(QGraphicsItemGroup):
         self.is_us = is_us
         self.font = font
 
-        # The part of the bot graphic that should rotate.
-        self.rotator = QGraphicsItemGroup()
-        self.addToGroup(self.rotator)
+        self.bot_rotation = 0
+
+        # Bot color fill brush.
+        self.fill_brush = QtGui.QBrush(QtCore.Qt.SolidPattern)
+        self.fill_brush.setColor(color)
+
+        self.selection_pen = QtGui.QPen(QtGui.QColor(0, 255, 255))
+        self.selection_pen.setWidth(SELECTION_WIDTH)
 
         # Make the bot selectable.
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
-
-        # Main robot body.
-        ellipse = QGraphicsEllipseItem(-BOT_DIAMETER/2, -BOT_DIAMETER/2, BOT_DIAMETER, BOT_DIAMETER)
-        ellipse.setBrush(QtGui.QBrush(color))
-        self.rotator.addToGroup(ellipse)
-
-        # Rotation line.
-        line_pen = QtGui.QPen()
-        line_pen.setWidth(10)
-        rot_line = QGraphicsLineItem(0, 0, BOT_DIAMETER/2, 0)
-        rot_line.setPen(line_pen)
-        self.rotator.addToGroup(rot_line)
-
-        # Bot id text.
-        id_text = QGraphicsTextItem(str(self.bot_id))
-        id_text.setFont(self.font)
-        id_text.setDefaultTextColor(QtGui.QColor(220, 220, 220))
-        id_text.setPos(-BOT_DIAMETER/3,-BOT_DIAMETER/2)
-        self.addToGroup(id_text)
-
-        # Selection circle.
-        selection_pen = QtGui.QPen(QtGui.QColor(100, 255, 255))
-        selection_pen.setWidth(10)
-        # Pixels for the selection circle to be bigger than the bot.
-        offset = BOT_DIAMETER * 0.3
-
-        self.selector = QGraphicsEllipseItem(-((BOT_DIAMETER/2)+offset/2), -((BOT_DIAMETER/2)+offset/2), BOT_DIAMETER + offset, BOT_DIAMETER + offset)
-        self.selector.setPen(selection_pen)
-        self.selector.setVisible(False)
-        self.addToGroup(self.selector)
 
         self.was_seen_last_update = True
 
@@ -68,7 +44,10 @@ class GraphicsRobot(QGraphicsItemGroup):
         Rotates the rotatable part of the bot to the supplied angle.
         Angle is in degrees.
         """
-        self.rotator.setRotation(angle)
+        self.bot_rotation = angle
+
+    def boundingRect(self):
+        return BOUNDING_RECT
 
 
     def itemChange(self, change, value):
@@ -76,11 +55,8 @@ class GraphicsRobot(QGraphicsItemGroup):
         Is called when the item changes.
         Currently only listens for selection changes.
         """
-        if change == QGraphicsWidget.ItemSelectedChange:
-            if value == True:
-                self.selector.setVisible(True)
-            else:
-                self.selector.setVisible(False)
+        if change == QGraphicsItem.ItemSelectedChange:
+            pass
 
         return QGraphicsItem.itemChange(self, change, value)
 
@@ -92,14 +68,19 @@ class GraphicsRobot(QGraphicsItemGroup):
 
 
     def paint(self, painter, option, widget):
-        """
-        Overrides the default `paint` function.
-        Doesn't paint anything.
-        This removes the square selection border, which isn't needed because of the seleciton circle being handled in `itemChange`.
-        No idea if this does anything else strange.
-        If something is missing from a robot, its probably because of this function.
-        Look here to only remove the selection line if this implementation turns out to do weird stuff:
-        http://www.qtcentre.org/threads/15089-QGraphicsView-change-selected-rectangle-style
-        """
+        painter.rotate(self.bot_rotation)
+        if self.isSelected():
+            painter.setPen(self.selection_pen)
+        else:
+            painter.setPen(QtCore.Qt.NoPen)
+        painter.setBrush(self.fill_brush)
+        # The `* 16` is here because drawChord wants it's angles in 16th of a degree.
+        start_angle = 45 * 16
+        span_angle = 270 * 16
+        painter.drawChord(BOT_BODY_RECT, start_angle, span_angle)
 
-        pass
+        painter.rotate(-self.bot_rotation)
+        painter.setPen(QtGui.QPen(QtCore.Qt.white))
+        painter.setFont(self.font)
+
+        painter.drawText(BOT_BODY_RECT, QtCore.Qt.AlignCenter, str(self.bot_id))
