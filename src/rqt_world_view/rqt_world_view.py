@@ -8,7 +8,7 @@ roslib.load_manifest("roboteam_msgs")
 from qt_gui.plugin import Plugin
 from python_qt_binding import loadUi, QtCore, QtGui, QtWidgets
 from python_qt_binding.QtCore import pyqtSignal, Qt, QTimer
-from python_qt_binding.QtWidgets import QWidget, QLabel, QSplitter, QVBoxLayout
+from python_qt_binding.QtWidgets import QWidget, QLabel, QSplitter, QVBoxLayout, QFrame
 
 from roboteam_msgs import msg
 from std_msgs import msg as std_msg
@@ -130,9 +130,6 @@ class WorldViewPlugin(Plugin):
 
         self.widget.setLayout(QVBoxLayout())
 
-        self.toolbar = WidgetToolbar()
-        self.widget.layout().addWidget(self.toolbar)
-
         self.vertical_splitter = QSplitter(Qt.Vertical)
         self.widget.layout().addWidget(self.vertical_splitter)
 
@@ -141,13 +138,24 @@ class WorldViewPlugin(Plugin):
 
         # ---- /Top layout ----
 
-        # ---- World viewer ----
+        # ---- Inner frame ----
+
+        self.inner_frame = QFrame()
+        self.inner_layout = QVBoxLayout()
+        self.inner_frame.setLayout(self.inner_layout)
+        self.inner_frame.setContentsMargins(0, 0, 0, 0)
+        self.inner_layout.setContentsMargins(0, 0, 0, 0)
+        self.horizontal_splitter.addWidget(self.inner_frame)
+
+
+        self.toolbar = WidgetToolbar()
+        self.inner_layout.addWidget(self.toolbar)
 
         self.world_view = WidgetWorldView(US_COLOR, THEM_COLOR)
 
-        self.horizontal_splitter.addWidget(self.world_view)
+        self.inner_layout.addWidget(self.world_view)
 
-        # ---- /World viewer ----
+        # ---- /Inner frame ----
 
         # ---- Score board ----
 
@@ -204,10 +212,10 @@ class WorldViewPlugin(Plugin):
         self.halt_update_signal.connect(self.slot_halt_update)
 
         # Toolbar connections.
-        self.toolbar.out_of_field_button.clicked.connect(self.world_view.put_robots_out_of_field)
+        self.toolbar.out_of_field_action.triggered.connect(self.world_view.put_robots_out_of_field)
         self.toolbar.toggle_halt_button.clicked.connect(self.toggle_halt)
-        self.toolbar.reset_view_button.clicked.connect(self.world_view.reset_view)
-        self.toolbar.clear_debug_button.clicked.connect(self.world_view.clear_debug_drawings)
+        self.toolbar.reset_view_action.triggered.connect(self.world_view.reset_view)
+        self.toolbar.clear_debug_action.triggered.connect(self.world_view.clear_debug_drawings)
 
         # ---- /Signal connections ----
 

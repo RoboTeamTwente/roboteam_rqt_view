@@ -16,23 +16,37 @@ class WidgetToolbar(QtWidgets.QFrame):
         self.vision_status_indicator.setAlignment(QtCore.Qt.AlignCenter)
         self.layout().addWidget(self.vision_status_indicator)
 
-        self.out_of_field_button = QtWidgets.QPushButton("Put all out of field")
-        self.layout().addWidget(self.out_of_field_button)
+        self.dropdown_button = QtWidgets.QToolButton()
+        self.dropdown_button.setText("Field")
+        self.dropdown_button.setPopupMode(QtWidgets.QToolButton.InstantPopup)
+        self.layout().addWidget(self.dropdown_button)
 
-        self.reset_view_button = QtWidgets.QPushButton("Reset view")
-        self.layout().addWidget(self.reset_view_button)
+        self.dropdown_menu = QtWidgets.QMenu()
+        self.dropdown_button.setMenu(self.dropdown_menu)
 
-        self.clear_debug_button = QtWidgets.QPushButton("Clear debug drawings")
-        self.layout().addWidget(self.clear_debug_button)
+        self.out_of_field_action = QtWidgets.QAction(self)
+        self.out_of_field_action.setText("Put all out of field")
+        self.dropdown_menu.addAction(self.out_of_field_action)
 
-        self.transformation_modal_button = QtWidgets.QPushButton("Config!")
-        self.layout().addWidget(self.transformation_modal_button)
-        self.transformation_modal_button.clicked.connect(self.open_field_transformation_modal)
+        self.reset_view_action = QtWidgets.QAction(self)
+        self.reset_view_action.setText("Reset view")
+        self.dropdown_menu.addAction(self.reset_view_action)
+
+        self.clear_debug_action = QtWidgets.QAction(self)
+        self.clear_debug_action.setText("Clear debug drawings")
+        self.dropdown_menu.addAction(self.clear_debug_action)
+
+        self.transformation_modal_action = QtWidgets.QAction(self)
+        self.transformation_modal_action.setText("Configure field transformation")
+        self.dropdown_menu.addAction(self.transformation_modal_action)
+        self.transformation_modal_action.triggered.connect(self.open_field_transformation_modal)
 
         self.toggle_halt_button = QtWidgets.QPushButton("Press to halt")
         self.layout().addWidget(self.toggle_halt_button)
 
         # ---- /Widgets ----
+
+        self.layout().addStretch(1)
 
         self.field_transformation_dialog = DialogFieldTransformation()
 
