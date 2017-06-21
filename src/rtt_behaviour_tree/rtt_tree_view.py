@@ -52,6 +52,7 @@ class TreeViewPlugin(Plugin):
         # plugins at once. Also if you open multiple instances of your
         # plugin at once, these lines add number to make it easy to
         # tell from pane to pane.
+        self.widget.setWindowTitle("Tree view")
         if context.serial_number() > 1:
             self.widget.setWindowTitle(self.widget.windowTitle() + (' (%d)' % context.serial_number()))
         # Add widget to the user interface
