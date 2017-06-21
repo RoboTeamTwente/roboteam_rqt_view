@@ -183,12 +183,6 @@ include_directories(
 ## Testing ##
 #############
 
-catkin_add_gtest(rqt_view_test
-    test/main.cpp
-	test/SimpleTest.cpp
-)
-target_link_libraries(rqt_view_test ${catkin_LIBRARIES})
-
 ## Add gtest based cpp test target and link libraries
 # catkin_add_gtest(${PROJECT_NAME}-test test/test_rqt_tutorial.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
