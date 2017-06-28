@@ -383,7 +383,7 @@ class WidgetWorldView(QFrame):
 
 
     def set_debug_line(self, line):
-        """Expects a `roboteam_msgs.DebugLine` point."""
+        """Expects a `roboteam_msgs.DebugLine` line."""
 
         if not line.name in self.debug_lines:
             if not line.remove:

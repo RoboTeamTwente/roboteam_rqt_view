@@ -36,4 +36,4 @@ class ItemDebugPoint(QtWidgets.QGraphicsItemGroup):
         painter.drawLine(self.pos_x, self.top_edge, self.pos_x, self.bottom_edge)
 
     def boundingRect(self):
-        return QtCore.QRectF(self.left_edge, self.top_edge, self.right_edge, self.bottom_edge)
+        return QtCore.QRectF(self.left_edge, self.top_edge, self.right_edge - self.left_edge, self.bottom_edge - self.top_edge)
