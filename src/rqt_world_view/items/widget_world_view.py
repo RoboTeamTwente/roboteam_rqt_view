@@ -173,15 +173,6 @@ class WidgetWorldView(QFrame):
         # Process handle for the TestX programm.
         self.testx_thread = None
 
-        # Ui update timer.
-        self.ui_update_timer = QtCore.QTimer()
-        self.ui_update_timer.timeout.connect(self.update_scene)
-        self.ui_update_timer.start(100) # Update every x millisecconds.
-
-
-    def update_scene(self):
-        self.scene.update(self.fieldview.sceneRect())
-
 
     def update_world_state(self, message):
         """
