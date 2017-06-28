@@ -363,21 +363,18 @@ class WidgetWorldView(QFrame):
         if not point.pos:
             return
 
-        if not point.name in self.debug_points:
-            if not point.remove:
+        if not point.remove:
+            if not point.name in self.debug_points:
                 new_point = ItemDebugPoint()
-                point_color = QtGui.QColor(point.color.r, point.color.g, point.color.b)
-                new_point.set_color(point_color)
-                new_point.set_pos(utils.m_to_mm(point.pos.x), -utils.m_to_mm(point.pos.y))
                 new_point.setParentItem(self.debug_point_parent)
                 self.debug_points[point.name] = new_point
+
+            point_item = self.debug_points[point.name]
+            point_color = QtGui.QColor(point.color.r, point.color.g, point.color.b)
+            point_item.set_color(point_color)
+            point_item.set_pos(utils.m_to_mm(point.pos.x), -utils.m_to_mm(point.pos.y))
         else:
-            if not point.remove:
-                point_color = QtGui.QColor(point.color.r, point.color.g, point.color.b)
-                point_item = self.debug_points[point.name]
-                point_item.set_color(point_color)
-                point_item.set_pos(utils.m_to_mm(point.pos.x), -utils.m_to_mm(point.pos.y))
-            else:
+            if point.name in self.debug_points:
                 self.scene.removeItem(self.debug_points[point.name])
                 del self.debug_points[point.name]
 
