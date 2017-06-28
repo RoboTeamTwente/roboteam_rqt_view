@@ -12,6 +12,7 @@ from rqt_world_view.utils.grsim_connector import GrsimConnector
 from graphics_robot import GraphicsRobot
 from qgraphics_arc_item import QGraphicsArcItem
 from item_debug_point import ItemDebugPoint
+from item_debug_line import ItemDebugLine
 
 from std_msgs import msg as std_msg
 
@@ -382,43 +383,21 @@ class WidgetWorldView(QFrame):
     def set_debug_line(self, line):
         """Expects a `roboteam_msgs.DebugLine` line."""
 
-        if not line.name in self.debug_lines:
-            if not line.remove:
-                self.add_debug_line(line)
+        if not line.remove:
+            if not line.name in self.debug_lines:
+                new_line = ItemDebugLine()
+                new_line.setParentItem(self.debug_line_parent)
+                self.debug_lines[line.name] = new_line
+
+            line_item = self.debug_lines[line.name]
+            line_color = QtGui.QColor(line.color.r, line.color.g, line.color.b)
+            line_item.set_color(line_color)
+
+            line_item.set_line(utils.m_to_mm(line.start.x), -utils.m_to_mm(line.start.y), utils.m_to_mm(line.stop.x), -utils.m_to_mm(line.stop.y))
         else:
-            # First remove the line.
-            for item in self.debug_lines[line.name].childItems():
-                self.debug_lines[line.name].removeFromGroup(item)
-                self.scene.removeItem(item)
-            del self.debug_lines[line.name]
-
-            # Then add the new version if necessary.
-            if not line.remove:
-                self.add_debug_line(line)
-
-
-    def add_debug_line(self, line):
-        line_group = QGraphicsItemGroup()
-        line_group.setParentItem(self.debug_line_parent)
-
-        line_pen = QtGui.QPen()
-        line_pen.setColor(QtGui.QColor(line.color.r, line.color.g, line.color.b))
-        line_pen.setWidth(15)
-
-        last_point = None
-
-        for i, point in enumerate(line.points):
-            if i > 0:
-                # Add all segments.
-                segment = QGraphicsLineItem(
-                    utils.m_to_mm(point.x), -utils.m_to_mm(point.y),
-                    utils.m_to_mm(last_point.x), -utils.m_to_mm(last_point.y))
-                segment.setPen(line_pen)
-                line_group.addToGroup(segment)
-
-            last_point = point
-
-        self.debug_lines[line.name] = line_group
+            if line.name in self.debug_lines:
+                self.scene.removeItem(self.debug_lines[line.name])
+                del self.debug_lines[line.name]
 
 
     def slot_scene_right_clicked(self, event):
