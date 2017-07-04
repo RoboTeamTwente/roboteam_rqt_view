@@ -21,6 +21,9 @@ class ItemDebugLine(QtWidgets.QGraphicsItemGroup):
         self.pen.setWidth(LINE_PEN_WIDTH)
 
     def set_line(self, start_x, start_y, stop_x, stop_y):
+        self.prepareGeometryChange()
+        self.setX((stop_x - start_x) / 2 + start_x)
+        self.setY((stop_y - start_y) / 2 + start_y)
         self.start_x = int(start_x)
         self.start_y = int(start_y)
         self.stop_x = int(stop_x)
@@ -35,7 +38,7 @@ class ItemDebugLine(QtWidgets.QGraphicsItemGroup):
 
     def paint(self, painter, option, widget):
         painter.setPen(self.pen)
-        painter.drawLine(self.start_x, self.start_y, self.stop_x, self.stop_y)
+        painter.drawLine(self.start_x - self.x(), self.start_y - self.y(), self.stop_x - self.x(), self.stop_y - self.y())
 
     def boundingRect(self):
-        return QtCore.QRectF(self.left_edge, self.top_edge, self.width, self.height)
+        return QtCore.QRectF(-self.width/2, -self.height/2, self.width, self.height)
