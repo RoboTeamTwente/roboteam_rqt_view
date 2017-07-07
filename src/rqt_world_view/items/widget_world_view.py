@@ -384,16 +384,18 @@ class WidgetWorldView(QFrame):
         """Expects a `roboteam_msgs.DebugLine` line."""
 
         if not line.remove:
-            if not line.name in self.debug_lines:
-                new_line = ItemDebugLine()
-                new_line.setParentItem(self.debug_line_parent)
-                self.debug_lines[line.name] = new_line
+            # Check for NaN coordinates.
+            if line.start == line.start and line.stop == line.stop:
+                if not line.name in self.debug_lines:
+                    new_line = ItemDebugLine()
+                    new_line.setParentItem(self.debug_line_parent)
+                    self.debug_lines[line.name] = new_line
 
-            line_item = self.debug_lines[line.name]
-            line_color = QtGui.QColor(line.color.r, line.color.g, line.color.b)
-            line_item.set_color(line_color)
+                line_item = self.debug_lines[line.name]
+                line_color = QtGui.QColor(line.color.r, line.color.g, line.color.b)
+                line_item.set_color(line_color)
 
-            line_item.set_line(utils.m_to_mm(line.start.x), -utils.m_to_mm(line.start.y), utils.m_to_mm(line.stop.x), -utils.m_to_mm(line.stop.y))
+                line_item.set_line(utils.m_to_mm(line.start.x), -utils.m_to_mm(line.start.y), utils.m_to_mm(line.stop.x), -utils.m_to_mm(line.stop.y))
         else:
             if line.name in self.debug_lines:
                 self.scene.removeItem(self.debug_lines[line.name])
