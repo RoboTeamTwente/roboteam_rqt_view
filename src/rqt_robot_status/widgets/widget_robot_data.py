@@ -4,13 +4,13 @@ from python_qt_binding import QtWidgets
 from python_qt_binding import QtGui
 
 
-import widget_robot_settings
-import widget_status_icons
-import widget_value_display
-import widget_robot_role
-import widget_color_pattern
-import widget_graph_display
-import colors
+from robot_widgets import widget_robot_settings, \
+    widget_status_icons, \
+    widget_value_display, \
+    widget_robot_role, \
+    widget_color_pattern, \
+    widget_graph_display
+from rqt_robot_status.widgets import colors
 
 
 class WidgetRobotData(QtWidgets.QFrame):

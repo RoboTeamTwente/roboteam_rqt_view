@@ -3,7 +3,7 @@ from python_qt_binding import QtCore
 from python_qt_binding import QtWidgets
 from python_qt_binding import QtGui
 
-import colors
+from rqt_robot_status.widgets import colors
 
 
 class WidgetStatusIcons(QtWidgets.QFrame):
