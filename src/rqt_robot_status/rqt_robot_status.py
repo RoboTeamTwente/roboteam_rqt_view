@@ -90,6 +90,7 @@ class RobotStatusPlugin(Plugin):
         # ---- Subscribers ----
 
         self.worldstate_sub = rospy.Subscriber("world_state", msg.World, self.callback_worldstate)
+        self.refbox_sub = rospy.Subscriber("vision_refbox", msg.RefereeData, self.callback_refbox)
         self.serial_status_sub = rospy.Subscriber("robot_serial_status", msg.RobotSerialStatus, self.callback_serial_status)
         self.bt_debug_sub = rospy.Subscriber("bt_debug_info", msg.BtDebugInfo, self.callback_bt_debug)
 
@@ -168,6 +169,9 @@ class RobotStatusPlugin(Plugin):
     def callback_worldstate(self, message):
         self.robot_map.update_with_detections(message.us)
         self.received_detection_message.emit()
+
+    def callback_refbox(self, message):
+        self.robot_map.update_with_refbox_message(message)
 
     def callback_serial_status(self, message):
         self.robot_map.update_with_serial_status(message)

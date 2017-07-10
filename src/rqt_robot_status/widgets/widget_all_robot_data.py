@@ -44,6 +44,16 @@ class WidgetAllRobotData(QtWidgets.QFrame):
 
         # ---- /Type selector ----
 
+        # ---- Refbox status ----
+
+        self.refbox_stage_label = QtWidgets.QLabel("")
+        self.layout().addWidget(self.refbox_stage_label)
+
+        self.refbox_command_label = QtWidgets.QLabel("")
+        self.layout().addWidget(self.refbox_command_label)
+
+        # ---- /Refbox status ----
+
         self.layout().addStretch(1)
 
         # ---- Connect signals ----
@@ -68,6 +78,12 @@ class WidgetAllRobotData(QtWidgets.QFrame):
         else:
             # Change vision icon to bad.
             self.vision_status_label.setStyleSheet(colors.BAD_STYLE)
+
+        refbox_stage = self.robot_map.get_refbox_stage()
+        self.refbox_stage_label.setText(refbox_stage)
+
+        refbox_command = self.robot_map.get_refbox_command()
+        self.refbox_command_label.setText(refbox_command)
 
 
     def change_robot_types(self, index):

@@ -1,4 +1,5 @@
 import robot_data
+import utils.referee as referee
 
 
 class RobotMap():
@@ -8,10 +9,8 @@ class RobotMap():
         self.robots = dict()
 
         self.vision_status = False
-
-
-    def get_vision_status(self):
-        return self.vision_status
+        self.refbox_stage = ""
+        self.refbox_command = ""
 
 
     def update_with_detections(self, detections):
@@ -27,6 +26,11 @@ class RobotMap():
             if bot_id not in [d.id for d in detections]:
                 # Vision is lost for this bot.
                 self.robots[bot_id].set_vision_lost()
+
+
+    def update_with_refbox_message(self, message):
+        self.refbox_stage = referee.stage_to_string(message.stage)
+        self.refbox_command = referee.command_to_string(message.command)
 
 
     def update_with_serial_status(self, status):
@@ -63,6 +67,15 @@ class RobotMap():
 
             return True
 
+
+    def get_vision_status(self):
+        return self.vision_status
+
+    def get_refbox_stage(self):
+        return self.refbox_stage
+
+    def get_refbox_command(self):
+        return self.refbox_command
 
     def get_robots(self):
         return self.robots
