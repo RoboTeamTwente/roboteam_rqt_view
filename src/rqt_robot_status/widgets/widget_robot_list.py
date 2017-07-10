@@ -45,6 +45,7 @@ class WidgetRobotList(QtWidgets.QFrame):
 
         self.strategy_data_widget = WidgetStrategyData(self.robot_map, self.config)
         self.scroll_layout.addWidget(self.strategy_data_widget)
+        self.strategy_data_widget.setVisible(False)
 
         self.scroll_layout.addStretch(1)
 

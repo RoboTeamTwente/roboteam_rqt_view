@@ -88,5 +88,9 @@ def add_types_from_json(data):
             print 'Warning: Malformed custom node found:'
             print "\t" + str(custom_type)
             return
+        if not custom_type['category'] in  node_categories:
+            print 'Warning: Malformed custom node found, category does not exist:'
+            print "\t" + str(custom_type)
+            return
 
         node_types[custom_type['name']] =  NodeType(custom_type['name'], custom_type['category'])
