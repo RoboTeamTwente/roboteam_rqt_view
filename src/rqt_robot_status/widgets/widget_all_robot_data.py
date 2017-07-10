@@ -9,9 +9,9 @@ from rqt_robot_status import robot_data
 
 class WidgetAllRobotData(QtWidgets.QFrame):
 
-    def __init__(self, robot_map, config):
+    def __init__(self, general_data, config):
         super(WidgetAllRobotData, self).__init__()
-        self.robot_map = robot_map
+        self.general_data = general_data
         self.config = config
 
         self.setLayout(QtWidgets.QHBoxLayout())
@@ -66,11 +66,13 @@ class WidgetAllRobotData(QtWidgets.QFrame):
     def update(self):
         self.vision_status_icon.setVisible(self.config.is_icons_visible())
         self.vision_status_label.setVisible(self.config.is_icons_visible())
+        self.refbox_stage_label.setVisible(self.config.is_referee_data_visible())
+        self.refbox_command_label.setVisible(self.config.is_referee_data_visible())
 
         self.robot_type_label.setVisible(self.config.is_robot_settings_visible())
         self.robot_type_box.setVisible(self.config.is_robot_settings_visible())
 
-        vision_status = self.robot_map.get_vision_status()
+        vision_status = self.general_data.get_vision_status()
 
         if vision_status:
             # Change vision icon to OK.
@@ -79,14 +81,14 @@ class WidgetAllRobotData(QtWidgets.QFrame):
             # Change vision icon to bad.
             self.vision_status_label.setStyleSheet(colors.BAD_STYLE)
 
-        refbox_stage = self.robot_map.get_refbox_stage()
+        refbox_stage = self.general_data.get_refbox_stage()
         self.refbox_stage_label.setText(refbox_stage)
 
-        refbox_command = self.robot_map.get_refbox_command()
+        refbox_command = self.general_data.get_refbox_command()
         self.refbox_command_label.setText(refbox_command)
 
 
     def change_robot_types(self, index):
         type_str = self.robot_type_box.itemText(index)
         new_type = robot_data.RobotType(type_str)
-        self.robot_map.change_all_robot_types(new_type)
+        self.general_data.change_all_robot_types(new_type)

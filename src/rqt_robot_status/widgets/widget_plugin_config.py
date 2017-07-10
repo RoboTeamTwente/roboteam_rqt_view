@@ -60,6 +60,10 @@ class WidgetPluginConfig(QtWidgets.QFrame):
         self.scroll_layout.addWidget(self.role_info_checkbox)
         self.role_info_checkbox.stateChanged.connect(self.role_info_state_changed)
 
+        self.referee_data_checkbox = QtWidgets.QCheckBox("Referee data")
+        self.scroll_layout.addWidget(self.referee_data_checkbox)
+        self.referee_data_checkbox.stateChanged.connect(self.referee_data_state_changed)
+
         self.scroll_layout.addStretch(2)
 
         self.update_from_config()
@@ -71,6 +75,7 @@ class WidgetPluginConfig(QtWidgets.QFrame):
         self.values_checkbox.setChecked(self.config.is_value_display_visible())
         self.settings_checkbox.setChecked(self.config.is_robot_settings_visible())
         self.role_info_checkbox.setChecked(self.config.is_robot_role_visible())
+        self.referee_data_checkbox.setChecked(self.config.is_referee_data_visible())
 
 
     def pattern_state_changed(self, state):
@@ -102,3 +107,9 @@ class WidgetPluginConfig(QtWidgets.QFrame):
             self.config.set_robot_role_visible(True)
         else:
             self.config.set_robot_role_visible(False)
+
+    def referee_data_state_changed(self, state):
+        if state == Qt.Checked:
+            self.config.set_referee_data_visible(True)
+        else:
+            self.config.set_referee_data_visible(False)

@@ -3,6 +3,7 @@ from python_qt_binding import QtWidgets
 from python_qt_binding import QtCore
 
 from widget_robot_data import WidgetRobotData
+from widget_strategy_data import WidgetStrategyData
 from widget_all_robot_data import WidgetAllRobotData
 
 
@@ -39,8 +40,11 @@ class WidgetRobotList(QtWidgets.QFrame):
         # self.scroll_area.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.scroll_area.setFrameStyle(QtWidgets.QFrame.NoFrame)
 
-        self.all_robot_widget = WidgetAllRobotData(self.robot_map, self.config)
+        self.all_robot_widget = WidgetAllRobotData(self.robot_map.get_general_data(), self.config)
         self.scroll_layout.addWidget(self.all_robot_widget)
+
+        self.strategy_data_widget = WidgetStrategyData(self.robot_map, self.config)
+        self.scroll_layout.addWidget(self.strategy_data_widget)
 
         self.scroll_layout.addStretch(1)
 

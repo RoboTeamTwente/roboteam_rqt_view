@@ -1,5 +1,5 @@
 import robot_data
-import utils.referee as referee
+import general_data
 
 
 class RobotMap():
@@ -8,9 +8,7 @@ class RobotMap():
 
         self.robots = dict()
 
-        self.vision_status = False
-        self.refbox_stage = ""
-        self.refbox_command = ""
+        self.general_data = general_data.GeneralData()
 
 
     def update_with_detections(self, detections):
@@ -29,8 +27,7 @@ class RobotMap():
 
 
     def update_with_refbox_message(self, message):
-        self.refbox_stage = referee.stage_to_string(message.stage)
-        self.refbox_command = referee.command_to_string(message.command)
+        self.general_data.update_with_refbox_message(message)
 
 
     def update_with_serial_status(self, status):
@@ -68,18 +65,11 @@ class RobotMap():
             return True
 
 
-    def get_vision_status(self):
-        return self.vision_status
-
-    def get_refbox_stage(self):
-        return self.refbox_stage
-
-    def get_refbox_command(self):
-        return self.refbox_command
+    def get_general_data(self):
+        return self.general_data
 
     def get_robots(self):
         return self.robots
-
 
     def remove_robot(self, bot_id):
         del self.robots[bot_id]
