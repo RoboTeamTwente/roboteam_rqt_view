@@ -43,7 +43,7 @@ class WidgetRobotList(QtWidgets.QFrame):
         self.all_robot_widget = WidgetAllRobotData(self.robot_map.get_general_data(), self.config)
         self.scroll_layout.addWidget(self.all_robot_widget)
 
-        self.strategy_data_widget = WidgetStrategyData(self.robot_map, self.config)
+        self.strategy_data_widget = WidgetStrategyData(self.robot_map.get_strategy_data(), self.config)
         self.scroll_layout.addWidget(self.strategy_data_widget)
         self.strategy_data_widget.setVisible(False)
 
@@ -56,6 +56,7 @@ class WidgetRobotList(QtWidgets.QFrame):
 
     def update(self):
         self.all_robot_widget.update()
+        self.strategy_data_widget.update()
 
         for bot_id, bot in self.robot_map.get_robots().items():
             if bot_id not in self.data_widgets:

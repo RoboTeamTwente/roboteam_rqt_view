@@ -1,18 +1,20 @@
 import robot_data
 import general_data
+import strategy_data
 
 
-class RobotMap():
+class DataModel():
 
     def __init__(self):
 
         self.robots = dict()
 
         self.general_data = general_data.GeneralData()
+        self.strategy_data = strategy_data.StrategyData()
 
 
     def update_with_detections(self, detections):
-        self.vision_status = True
+        self.general_data.update_with_detections(detections)
 
         for bot in detections:
             if bot.id not in self.robots:
@@ -50,6 +52,9 @@ class RobotMap():
 
             self.robots[status.bot_id].update_with_role_status(status)
 
+    def update_with_strategy_debug_info(self, strategy_info):
+        self.strategy_data.update_with_strategy_debug_info(strategy_info)
+
 
     def create_new_robot(self, bot_id):
         """
@@ -68,6 +73,9 @@ class RobotMap():
     def get_general_data(self):
         return self.general_data
 
+    def get_strategy_data(self):
+        return self.strategy_data
+
     def get_robots(self):
         return self.robots
 
@@ -79,6 +87,6 @@ class RobotMap():
             bot.change_robot_type(new_type)
 
     def detection_timed_out(self):
-        self.vision_status = False
+        self.general_data.set_vision_lost()
         for bot_id, bot in self.robots.items():
             bot.set_vision_lost()

@@ -8,11 +8,15 @@ class GeneralData():
         self.refbox_stage = ""
         self.refbox_command = ""
 
+    def update_with_detections(self, detections):
+        self.vision_status = True
 
     def update_with_refbox_message(self, message):
         self.refbox_stage = referee.stage_to_string(message.stage)
         self.refbox_command = referee.command_to_string(message.command)
 
+    def set_vision_lost(self):
+        self.vision_status = False
 
     def get_vision_status(self):
         return self.vision_status

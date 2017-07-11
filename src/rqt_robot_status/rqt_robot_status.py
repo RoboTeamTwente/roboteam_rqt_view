@@ -10,7 +10,7 @@ from python_qt_binding import QtCore
 from roboteam_msgs import msg
 
 
-import robot_map
+import data_model
 import plugin_config
 from widgets import widget_robot_list, widget_plugin_config
 
@@ -67,7 +67,7 @@ class RobotStatusPlugin(Plugin):
         # ---- data ----
 
 
-        self.robot_map = robot_map.RobotMap()
+        self.data_model = data_model.DataModel()
         self.plugin_config = plugin_config.PluginConfig()
 
         self.plugin_config.set_stop_callback(self.send_rolenode_stop_command)
@@ -82,7 +82,7 @@ class RobotStatusPlugin(Plugin):
         self.config_widget = widget_plugin_config.WidgetPluginConfig(self.plugin_config)
         self.widget.layout().addWidget(self.config_widget, stretch=0)
 
-        self.robot_list_widget = widget_robot_list.WidgetRobotList(self.robot_map, self.plugin_config)
+        self.robot_list_widget = widget_robot_list.WidgetRobotList(self.data_model, self.plugin_config)
         self.widget.layout().addWidget(self.robot_list_widget, stretch=1)
 
         # ---- /Widgets ----
@@ -93,6 +93,7 @@ class RobotStatusPlugin(Plugin):
         self.refbox_sub = rospy.Subscriber("vision_refbox", msg.RefereeData, self.callback_refbox)
         self.serial_status_sub = rospy.Subscriber("robot_serial_status", msg.RobotSerialStatus, self.callback_serial_status)
         self.bt_debug_sub = rospy.Subscriber("bt_debug_info", msg.BtDebugInfo, self.callback_bt_debug)
+        self.strategy_debug_sub = rospy.Subscriber("strategy_debug_info", msg.StrategyDebugInfo, self.callback_strategy_debug)
 
         # ---- /Subscribers ----
 
@@ -127,8 +128,10 @@ class RobotStatusPlugin(Plugin):
     def shutdown_plugin(self):
         # TODO unregister all publishers here
         self.worldstate_sub.unregister()
+        self.refbox_sub.unregister()
         self.serial_status_sub.unregister()
         self.bt_debug_sub.unregister()
+        self.strategy_debug_sub.unregister()
 
         self.role_directive_pub.unregister()
 
@@ -152,7 +155,7 @@ class RobotStatusPlugin(Plugin):
         self.robot_list_widget.update()
 
     def update_parameters_from_ros(self):
-        self.robot_map.update_parameters_from_ros()
+        self.data_model.update_parameters_from_ros()
 
 
     def send_rolenode_stop_command(self, bot_id):
@@ -167,17 +170,20 @@ class RobotStatusPlugin(Plugin):
     # ----------
 
     def callback_worldstate(self, message):
-        self.robot_map.update_with_detections(message.us)
+        self.data_model.update_with_detections(message.us)
         self.received_detection_message.emit()
 
     def callback_refbox(self, message):
-        self.robot_map.update_with_refbox_message(message)
+        self.data_model.update_with_refbox_message(message)
 
     def callback_serial_status(self, message):
-        self.robot_map.update_with_serial_status(message)
+        self.data_model.update_with_serial_status(message)
 
     def callback_bt_debug(self, message):
-        self.robot_map.update_with_role_status(message)
+        self.data_model.update_with_role_status(message)
+
+    def callback_strategy_debug(self, message):
+        self.data_model.update_with_strategy_debug_info(message)
 
     # ----------
     # Slots
@@ -187,4 +193,4 @@ class RobotStatusPlugin(Plugin):
         self.detection_timeout_timer.start(DETECTION_TIMEOUT)
 
     def detection_timed_out(self):
-        self.robot_map.detection_timed_out()
+        self.data_model.detection_timed_out()
