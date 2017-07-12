@@ -14,6 +14,8 @@ class Node:
         self.properties = {}
         self._children = []
 
+        self._blackboard = ""
+
         # Status of this node. For the values see roboteam_msgs/BtStatus.msg.
         self._status = None
 
@@ -31,6 +33,18 @@ class Node:
 
     def update_status(self, status):
         self._status = status
+
+    def has_blackboard(self):
+        if self._blackboard == "":
+            return False
+        else:
+            return True
+
+    def add_to_blackboard(self, param_name, value):
+        self._blackboard += param_name + ": " + str(value) + "\n"
+
+    def get_blackboard(self):
+        return self._blackboard
 
     def load_from_json(self, data):
         self._id = uuid.UUID(data['id'])

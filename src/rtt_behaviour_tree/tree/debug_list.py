@@ -57,8 +57,20 @@ class DebugList(QtCore.QObject):
 
                     is_new_node = not node_name in self._node_trees
 
-                    if clean_tree:
-                        self._node_trees[node_name] = copy.deepcopy(clean_tree)
+                    tree = copy.deepcopy(clean_tree)
+                    self._node_trees[node_name] = tree
+
+                    # Parse the blackboard. If it is there.
+                    if message.blackboard:
+                        for entry in message.blackboard.bools:
+                            self.parse_blackboard_entry(tree, entry)
+                        for entry in message.blackboard.doubles:
+                            self.parse_blackboard_entry(tree, entry)
+                        for entry in message.blackboard.ints:
+                            self.parse_blackboard_entry(tree, entry)
+                        for entry in message.blackboard.strings:
+                            self.parse_blackboard_entry(tree, entry)
+
 
                     # Call this after adding the tree.
                     # Because objects receiving this signal might want to do something with the new tree.
@@ -77,6 +89,21 @@ class DebugList(QtCore.QObject):
 
                         self.leaf_update.emit(node_name, leaf.title(), leaf.status())
 
-    def clear(self):
+    def parse_blackboard_entry(self, tree, entry):
+        (leaf_name, param_name) = get_local_names_from_global_blackboard_name(entry.name)
+        leaf = tree.get_node_by_title(leaf_name)
+        if leaf:
+            leaf.add_to_blackboard(param_name, entry.value)
 
+    def clear(self):
         self._node_trees.clear()
+
+
+def get_local_names_from_global_blackboard_name(global_name):
+    """
+    Takes in a global parameter name, e.g.: "SimpleDefender_A_distanceFromGoal".
+    Returns the local leaf name and the parameter name.
+    In the example: ("SimpleDefender_A", "distanceFromGoal")
+    """
+    parts = global_name.split('_')
+    return ('_'.join(parts[:len(parts)-1]), parts[-1])

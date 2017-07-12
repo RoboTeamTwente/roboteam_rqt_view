@@ -54,13 +54,25 @@ class NodeGraphicsItem(QtWidgets.QGraphicsWidget):
                 self.body = QtWidgets.QGraphicsRectItem(0, 0, self.size.x, self.size.y)
 
             self.node_body.addToGroup(self.body)
-            self.text = QtWidgets.QGraphicsTextItem("")
-            self.node_body.addToGroup(self.text)
+            self.title_text = QtWidgets.QGraphicsTextItem("")
+            self.node_body.addToGroup(self.title_text)
 
             self.connectors = []
 
             self.body_pen = QtGui.QPen()
             self.body_brush = QtGui.QBrush()
+
+            if self._node.has_blackboard():
+                self.setAcceptHoverEvents(True)
+
+                self.blackboard_background = QtWidgets.QGraphicsRectItem(0, 0, 0, 0)
+                self.blackboard_background.setBrush(QtCore.Qt.white)
+                self.blackboard_background.setVisible(False)
+                self.node_body.addToGroup(self.blackboard_background)
+
+                self.blackboard_text = QtWidgets.QGraphicsTextItem(self._node.get_blackboard())
+                self.blackboard_text.setVisible(False)
+                self.node_body.addToGroup(self.blackboard_text)
 
             self.update()
 
@@ -75,13 +87,18 @@ class NodeGraphicsItem(QtWidgets.QGraphicsWidget):
         if self._node.type.has_custom_icon():
             text_string = self._node.type.custom_icon
 
-        self.text.setPlainText(text_string)
+        self.title_text.setPlainText(text_string)
 
-        self.size.x = self.text.boundingRect().width()
-        self.size.y = self.text.boundingRect().height()
+        self.size.x = self.title_text.boundingRect().width()
+        self.size.y = self.title_text.boundingRect().height()
 
         self.body.setRect(0, -self.size.y/2, self.size.x, self.size.y)
-        self.text.setPos(0, -self.size.y/2)
+        self.title_text.setPos(0, -self.size.y/2)
+
+        if self._node.has_blackboard():
+            self.blackboard_size = self.blackboard_text.boundingRect()
+            self.blackboard_background.setRect(0, self.size.y/2, self.blackboard_size.width(), self.blackboard_size.height())
+            self.blackboard_text.setPos(0, self.size.y/2)
 
         status = self._node.status()
 
@@ -103,6 +120,7 @@ class NodeGraphicsItem(QtWidgets.QGraphicsWidget):
 
             connector = QtWidgets.QGraphicsPathItem(path)
             connector.setParentItem(self)
+            connector.setZValue(0)
             self.connectors.append(connector)
 
 
@@ -139,3 +157,15 @@ class NodeGraphicsItem(QtWidgets.QGraphicsWidget):
 
     # Create the bodycolor property, so that the qt animation framework can find it.
     bodycolor = QtCore.pyqtProperty(QtGui.QColor, bodyColor, setBodyColor)
+
+    # ---- Slots ----
+
+    def hoverEnterEvent(self, event):
+        self.blackboard_text.setVisible(True)
+        self.blackboard_background.setVisible(True)
+        self.node_body.setZValue(3)
+
+    def hoverLeaveEvent(self, event):
+        self.blackboard_text.setVisible(False)
+        self.blackboard_background.setVisible(False)
+        self.node_body.setZValue(0)
