@@ -4,6 +4,7 @@ from python_qt_binding import QtGui
 
 import colors
 from rqt_robot_status import robot_data
+import widget_strategy_command_data
 
 
 class WidgetStrategyData(QtWidgets.QFrame):
@@ -21,11 +22,15 @@ class WidgetStrategyData(QtWidgets.QFrame):
 
         # ---- Widgets ----
 
-        self.interpreted_command_label = QtWidgets.QLabel()
-        self.layout().addWidget(self.interpreted_command_label)
+        self.id_font = QtGui.QFont("Arial", 20, QtGui.QFont.Bold)
 
-        self.current_strategy_label = QtWidgets.QLabel()
-        self.layout().addWidget(self.current_strategy_label)
+        self.id_label = QtWidgets.QLabel("S")
+        self.id_label.setFont(self.id_font)
+        self.id_label.setMaximumHeight(20)
+        self.layout().addWidget(self.id_label)
+
+        self.widget_strategy_command_data = widget_strategy_command_data.WidgetStrategyCommandData(self.strategy_data)
+        self.layout().addWidget(self.widget_strategy_command_data)
 
         # ---- /Widgets ----
 
@@ -35,10 +40,8 @@ class WidgetStrategyData(QtWidgets.QFrame):
     def update(self):
         # ---- Apply config ----
 
-        self.interpreted_command_label.setVisible(self.config.is_referee_data_visible())
-        self.current_strategy_label.setVisible(self.config.is_robot_role_visible())
+        self.widget_strategy_command_data.setVisible(self.config.is_referee_data_visible())
 
         # ---- /Apply config ----
 
-        self.interpreted_command_label.setText(self.strategy_data.get_interpreted_command())
-        self.current_strategy_label.setText(self.strategy_data.get_current_strategy())
+        self.widget_strategy_command_data.update()

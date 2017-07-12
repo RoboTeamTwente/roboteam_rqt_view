@@ -58,6 +58,11 @@ class WidgetRobotList(QtWidgets.QFrame):
         self.all_robot_widget.update()
         self.strategy_data_widget.update()
 
+        # Only start displaying the strategy widget when we are sure a
+        # strategy node exists.
+        if self.robot_map.get_strategy_data().is_first_message_received():
+            self.strategy_data_widget.setVisible(True)
+
         for bot_id, bot in self.robot_map.get_robots().items():
             if bot_id not in self.data_widgets:
                 new_widget = WidgetRobotData(bot, self.config)
