@@ -4,7 +4,6 @@ roslib.load_manifest("roboteam_msgs")
 
 from qt_gui.plugin import Plugin
 from python_qt_binding import loadUi, QtCore, QtGui, QtWidgets
-from python_qt_binding import QtCore
 
 
 from roboteam_msgs import msg

@@ -5,6 +5,7 @@ from python_qt_binding import QtGui
 import colors
 from rqt_robot_status import robot_data
 import widget_strategy_command_data
+import widget_strategy_play_data
 
 
 class WidgetStrategyData(QtWidgets.QFrame):
@@ -32,6 +33,9 @@ class WidgetStrategyData(QtWidgets.QFrame):
         self.widget_strategy_command_data = widget_strategy_command_data.WidgetStrategyCommandData(self.strategy_data)
         self.layout().addWidget(self.widget_strategy_command_data)
 
+        self.widget_strategy_play_data = widget_strategy_play_data.WidgetStrategyPlayData(self.strategy_data)
+        self.layout().addWidget(self.widget_strategy_play_data)
+
         # ---- /Widgets ----
 
         self.layout().addStretch(1)
@@ -45,3 +49,4 @@ class WidgetStrategyData(QtWidgets.QFrame):
         # ---- /Apply config ----
 
         self.widget_strategy_command_data.update()
+        self.widget_strategy_play_data.update()
