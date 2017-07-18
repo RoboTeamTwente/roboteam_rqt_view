@@ -20,8 +20,6 @@ class StrategyData():
                 bots.append(bot)
             self.plays[play.play_name] = bots
 
-        print self.plays
-
     def get_interpreted_command(self):
         return self.interpreted_command
 

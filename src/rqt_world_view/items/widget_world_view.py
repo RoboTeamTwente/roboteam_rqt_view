@@ -526,12 +526,10 @@ class WidgetWorldView(QFrame):
 
 
     def clear_debug_drawings(self):
-        for name in self.debug_points.keys():
-            self.scene.removeItem(self.debug_points[name])
+        for name, item in self.debug_points.items():
+            self.scene.removeItem(item)
             del self.debug_points[name]
 
-        for name in self.debug_lines.keys():
-            for item in self.debug_lines[name].childItems():
-                self.debug_lines[name].removeFromGroup(item)
-                self.scene.removeItem(item)
+        for name, item in self.debug_lines.items():
+            self.scene.removeItem(item)
             del self.debug_lines[name]
