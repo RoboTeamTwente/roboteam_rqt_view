@@ -22,7 +22,6 @@ class WidgetStrategyPlayData(QtWidgets.QFrame):
 
         for name, robots in self.strategy_data.plays.items():
             text = name
-            print robots
             for bot in robots:
                 text += " " + str(bot)
             widget = QtWidgets.QLabel(text)
