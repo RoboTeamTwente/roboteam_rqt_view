@@ -2,6 +2,8 @@ from python_qt_binding import QtWidgets
 from python_qt_binding import QtGui
 from python_qt_binding import QtCore
 
+import math
+
 CROSSHAIR_EXTENSION = 100
 CROSSHAIR_PEN_WIDTH = 15
 
@@ -20,6 +22,10 @@ class ItemDebugPoint(QtWidgets.QGraphicsItemGroup):
         self.pen.setWidth(CROSSHAIR_PEN_WIDTH)
 
     def set_pos(self, x, y):
+        if math.isnan(x) or math.isnan(y):
+            print "ERROR! x or y is nan at item_debug_point.py:26."
+            return
+
         self.prepareGeometryChange()
         self.pos_x = int(x)
         self.pos_y = int(y)
