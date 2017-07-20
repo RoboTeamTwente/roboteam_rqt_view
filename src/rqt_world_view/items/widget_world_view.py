@@ -69,15 +69,11 @@ class WidgetWorldView(QFrame):
         self.field_lines.setZValue(-5)
 
         self.goals = QGraphicsItemGroup()
-        self.field_lines.setZValue(-4)
+        self.goals.setZValue(-4)
 
         # Debug markers sent via the `view_debug_points` topic.
-        self.debug_point_parent = QGraphicsItemGroup()
-        self.debug_point_parent.setZValue(10)
         self.debug_points = {}
 
-        self.debug_line_parent = QGraphicsItemGroup()
-        self.debug_line_parent.setZValue(9)
         self.debug_lines = {}
 
         self.ball_crosshair_pen = QtGui.QPen()
@@ -135,10 +131,6 @@ class WidgetWorldView(QFrame):
 
         # Add the ball to the scene.
         self.scene.addItem(self.ball)
-
-        # Add the debug points to the scene.
-        self.scene.addItem(self.debug_point_parent)
-        self.scene.addItem(self.debug_line_parent)
 
         # Add the ball crosshair.
         self.scene.addItem(self.ball_crosshair_parent)
@@ -367,7 +359,8 @@ class WidgetWorldView(QFrame):
         if not point.remove:
             if not point.name in self.debug_points:
                 new_point = ItemDebugPoint()
-                new_point.setParentItem(self.debug_point_parent)
+                self.scene.addItem(new_point)
+                new_point.setZValue(10)
                 self.debug_points[point.name] = new_point
 
             point_item = self.debug_points[point.name]
@@ -388,7 +381,8 @@ class WidgetWorldView(QFrame):
             if line.start == line.start and line.stop == line.stop:
                 if not line.name in self.debug_lines:
                     new_line = ItemDebugLine()
-                    new_line.setParentItem(self.debug_line_parent)
+                    self.scene.addItem(new_line)
+                    new_line.setZValue(9)
                     self.debug_lines[line.name] = new_line
 
                 line_item = self.debug_lines[line.name]
