@@ -42,37 +42,35 @@ class NodeGraphicsItem(QtWidgets.QGraphicsWidget):
 
             self._node = node_reference
 
-            self.node_body = QtWidgets.QGraphicsItemGroup(parent=self)
-            # Make the body dragable.
-            # self.node_body.setFlag(QtWidgets.QGraphicsItemGroup.ItemIsMovable, True)
-
             self.size = vector2.Vector2(100, 30)
 
             if self._node.type.category.name == 'condition':
-                self.body = QtWidgets.QGraphicsEllipseItem(0, 0, self.size.x, self.size.y)
+                self.body = QtWidgets.QGraphicsEllipseItem(0, 0, self.size.x, self.size.y, parent=self)
             else:
-                self.body = QtWidgets.QGraphicsRectItem(0, 0, self.size.x, self.size.y)
+                self.body = QtWidgets.QGraphicsRectItem(0, 0, self.size.x, self.size.y, parent=self)
 
-            self.node_body.addToGroup(self.body)
-            self.title_text = QtWidgets.QGraphicsTextItem("")
-            self.node_body.addToGroup(self.title_text)
+            if self._node.has_blackboard():
+                self.setAcceptHoverEvents(True)
+
+                self.blackboard_notifier = QtWidgets.QGraphicsTextItem("bb", parent=self.body)
+                font = self.blackboard_notifier.font()
+                font.setPixelSize(10)
+                self.blackboard_notifier.setFont(font)
+
+                # Create blackboad dropdown.
+                self.blackboard_background = QtWidgets.QGraphicsRectItem(0, 0, 0, 0, parent=self.body)
+                self.blackboard_background.setBrush(QtCore.Qt.white)
+                self.blackboard_background.setVisible(False)
+
+                self.blackboard_text = QtWidgets.QGraphicsTextItem(self._node.get_blackboard(), parent=self.blackboard_background)
+                self.blackboard_text.setVisible(False)
+
+            self.title_text = QtWidgets.QGraphicsTextItem("", parent=self.body)
 
             self.connectors = []
 
             self.body_pen = QtGui.QPen()
             self.body_brush = QtGui.QBrush()
-
-            if self._node.has_blackboard():
-                self.setAcceptHoverEvents(True)
-
-                self.blackboard_background = QtWidgets.QGraphicsRectItem(0, 0, 0, 0)
-                self.blackboard_background.setBrush(QtCore.Qt.white)
-                self.blackboard_background.setVisible(False)
-                self.node_body.addToGroup(self.blackboard_background)
-
-                self.blackboard_text = QtWidgets.QGraphicsTextItem(self._node.get_blackboard())
-                self.blackboard_text.setVisible(False)
-                self.node_body.addToGroup(self.blackboard_text)
 
             self.update()
 
@@ -92,13 +90,17 @@ class NodeGraphicsItem(QtWidgets.QGraphicsWidget):
         self.size.x = self.title_text.boundingRect().width()
         self.size.y = self.title_text.boundingRect().height()
 
-        self.body.setRect(0, -self.size.y/2, self.size.x, self.size.y)
-        self.title_text.setPos(0, -self.size.y/2)
-
         if self._node.has_blackboard():
             self.blackboard_size = self.blackboard_text.boundingRect()
             self.blackboard_background.setRect(0, self.size.y/2, self.blackboard_size.width(), self.blackboard_size.height())
             self.blackboard_text.setPos(0, self.size.y/2)
+
+            notifier_size = self.blackboard_notifier.boundingRect()
+            self.blackboard_notifier.setPos(self.size.x - notifier_size.width()/2, -self.size.y/2)
+            self.size.x += notifier_size.width()/2
+
+        self.body.setRect(0, -self.size.y/2, self.size.x, self.size.y)
+        self.title_text.setPos(0, -self.size.y/2)
 
         status = self._node.status()
 
@@ -163,9 +165,9 @@ class NodeGraphicsItem(QtWidgets.QGraphicsWidget):
     def hoverEnterEvent(self, event):
         self.blackboard_text.setVisible(True)
         self.blackboard_background.setVisible(True)
-        self.node_body.setZValue(3)
+        self.setZValue(10)
 
     def hoverLeaveEvent(self, event):
         self.blackboard_text.setVisible(False)
         self.blackboard_background.setVisible(False)
-        self.node_body.setZValue(0)
+        self.setZValue(0)
