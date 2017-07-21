@@ -53,7 +53,7 @@ class WidgetMultiSkillTester(QtWidgets.QFrame):
         # This shouldn't be necessary.
         # A scroll area with no horizontal scroll bar should automatically resize to the minimum size of it's contents.
         # It doesn't, so this arbitrary width is needed.
-        self.scroll_area.setMinimumWidth(300)
+        self.scroll_area.setMinimumWidth(250)
 
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -70,6 +70,19 @@ class WidgetMultiSkillTester(QtWidgets.QFrame):
         self.testers[tester_id].deleteLater()
         del self.testers[tester_id]
 
+
+    def get_state(self):
+        state = []
+        for tester_id, tester in self.testers.items():
+            state.append(tester.get_state())
+
+        return state
+
+    def set_state(self, state):
+        for tester_state in state:
+            tester = self.slot_add_tester()
+            tester.set_state(tester_state)
+
 # ------------------------------------------------------------------------------
 # ---------- Button slots ------------------------------------------------------
 # ------------------------------------------------------------------------------
@@ -81,10 +94,13 @@ class WidgetMultiSkillTester(QtWidgets.QFrame):
         tester.setFrameStyle(QtWidgets.QFrame.Panel)
         tester.add_remove_button(self.remove_tester, self.next_tester_id)
 
-        self.scroll_layout.insertWidget(0, tester)
+        # Insert the new tester right before the spacer at the bottom.
+        self.scroll_layout.insertWidget(self.scroll_layout.count()-1, tester)
         self.testers[self.next_tester_id] = tester
 
         self.next_tester_id += 1
+
+        return tester
 
     def slot_start_all(self):
         for key, tester in self.testers.iteritems():

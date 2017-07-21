@@ -1,0 +1,21 @@
+<library path="src">
+  <class name="RoboTeam tree view" type="rtt_behaviour_tree.rtt_tree_view.TreeViewPlugin" base_class_type="rqt_gui_py::Plugin">
+    <description>
+      An example Python GUI plugin to create a great user interface.
+    </description>
+    <qtgui>
+        <group>
+          <label>RoboTeam Twente</label>
+          <icon type="file">icons/RoboTeamTwente.png</icon>
+        </group>
+        <!--
+        <group>
+        <label>Subgroup</label>
+        </group>
+        -->
+      <label>RoboTeam Tree View</label>
+      <icon type="file">icons/TreeView.png</icon>
+      <statustip>Great user interface to provide real value.</statustip>
+    </qtgui>
+  </class>
+</library>

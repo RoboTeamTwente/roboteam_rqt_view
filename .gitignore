@@ -1,2 +1,6 @@
 *.pyc
 *.bak
+
+# Vim temporaries
+*.swp
+*~

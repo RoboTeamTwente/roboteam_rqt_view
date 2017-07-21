@@ -1,33 +1,39 @@
 import os
+import sys
+import json
 import rospy
-import rospkg
-import actionlib
 import roslib
 roslib.load_manifest("roboteam_msgs")
 
 from qt_gui.plugin import Plugin
 from python_qt_binding import loadUi, QtCore, QtGui, QtWidgets
-from python_qt_binding.QtCore import pyqtSignal, Qt
-from python_qt_binding.QtWidgets import QWidget, QLabel, QSplitter, QVBoxLayout
+from python_qt_binding.QtCore import pyqtSignal, Qt, QTimer
+from python_qt_binding.QtWidgets import QWidget, QLabel, QSplitter, QVBoxLayout, QFrame
 
 from roboteam_msgs import msg
+from std_msgs import msg as std_msg
 
 from items.widget_robot_details import WidgetRobotDetails
 from items.widget_world_view import WidgetWorldView
 from items.widget_scoreboard import WidgetScoreboard
 from items.widget_skill_tester import WidgetSkillTester
 from items.widget_multi_skill_tester import WidgetMultiSkillTester
-
-
-# Size of the area around the field in mm.
-FIELD_RUNOUT_ZONE = 300
+from items.widget_toolbar import WidgetToolbar
 
 FIELD_COLOR = QtGui.QColor(0, 200, 50)
 FIELD_LINE_COLOR = QtGui.QColor(255, 255, 255)
 BALL_COLOR = QtGui.QColor(255, 100, 0)
 
-US_COLOR = QtGui.QColor(255, 50, 50); # The color of our robots.
-THEM_COLOR = QtGui.QColor(127, 84, 147); # The color of the opponents robots.
+US_COLOR = QtGui.QColor(255, 50, 50) # The color of our robots.
+THEM_COLOR = QtGui.QColor(127, 84, 147) # The color of the opponents robots.
+
+# Milliseconds to wait for a vision packet before assuming it has stopped.
+VISION_TIMEOUT_TIME = 2000
+
+
+SIDEBAR_PROPORTIONS_SETTINGS_NAME = "sidebar_proportions"
+TOPBAR_PROPORTIONS_SETTINGS_NAME = "topbar_proportions"
+SKILL_TESTER_STATE_NAME = "skill_tester_state"
 
 
 class WorldViewPlugin(Plugin):
@@ -41,6 +47,7 @@ class WorldViewPlugin(Plugin):
     debug_point_signal = pyqtSignal(msg.DebugPoint)
     debug_line_signal = pyqtSignal(msg.DebugLine)
 
+    halt_update_signal = pyqtSignal(std_msg.Bool)
 
     def __init__(self, context):
         super(WorldViewPlugin, self).__init__(context)
@@ -51,7 +58,7 @@ class WorldViewPlugin(Plugin):
         from argparse import ArgumentParser
         parser = ArgumentParser()
         # Add argument(s) to the parser.
-        parser.add_argument("-q", "---quiet", action="store_true",
+        parser.add_argument("-q", "--quiet", action="store_true",
                       dest="quiet",
                       help="Put plugin in silent mode")
         args, unknowns = parser.parse_known_args(context.argv())
@@ -76,10 +83,17 @@ class WorldViewPlugin(Plugin):
         # plugins at once. Also if you open multiple instances of your
         # plugin at once, these lines add number to make it easy to
         # tell from pane to pane.
+        self.widget.setWindowTitle("World view")
         if context.serial_number() > 1:
             self.widget.setWindowTitle(self.widget.windowTitle() + (' (%d)' % context.serial_number()))
         # Add widget to the user interface
         context.add_widget(self.widget)
+
+        # ---- Data ----
+
+        self.is_halting = False
+
+        # ---- /Data ----
 
         # ---- Subscribers ----
 
@@ -97,12 +111,18 @@ class WorldViewPlugin(Plugin):
         self.debug_point_sub = rospy.Subscriber("view_debug_points", msg.DebugPoint, self.callback_debug_point)
         self.debug_line_sub = rospy.Subscriber("view_debug_lines", msg.DebugLine, self.callback_debug_line)
 
+        # Whenever something broadcasts a halt, this subscriber gets it
+        self.halt_sub = rospy.Subscriber("halt", std_msg.Bool, self.callback_halt)
+
         # ---- /Subscribers ----
 
         # ---- Topics ----
 
         # Create the Strategy Ignore Robot topic.
         self.strategy_ignore_topic = rospy.Publisher("strategy_ignore_robot", msg.StrategyIgnoreRobot, queue_size=100)
+
+        # Halt publisher such that the widget can halt as well
+        self.halt_pub = rospy.Publisher("halt", std_msg.Bool, queue_size = 10)
 
         # ---- /Topics ----
 
@@ -118,13 +138,24 @@ class WorldViewPlugin(Plugin):
 
         # ---- /Top layout ----
 
-        # ---- World viewer ----
+        # ---- Inner frame ----
+
+        self.inner_frame = QFrame()
+        self.inner_layout = QVBoxLayout()
+        self.inner_frame.setLayout(self.inner_layout)
+        self.inner_frame.setContentsMargins(0, 0, 0, 0)
+        self.inner_layout.setContentsMargins(0, 0, 0, 0)
+        self.horizontal_splitter.addWidget(self.inner_frame)
+
+
+        self.toolbar = WidgetToolbar()
+        self.inner_layout.addWidget(self.toolbar)
 
         self.world_view = WidgetWorldView(US_COLOR, THEM_COLOR)
 
-        self.horizontal_splitter.addWidget(self.world_view)
+        self.inner_layout.addWidget(self.world_view)
 
-        # ---- /World viewer ----
+        # ---- /Inner frame ----
 
         # ---- Score board ----
 
@@ -149,6 +180,24 @@ class WorldViewPlugin(Plugin):
 
         # ---- /Sidebar ----
 
+        # Make only the main view expand when the window resizes.
+        self.vertical_splitter.setStretchFactor(0, 0)
+        self.vertical_splitter.setStretchFactor(1, 1)
+
+        self.horizontal_splitter.setStretchFactor(0, 1)
+        self.horizontal_splitter.setStretchFactor(1, 0)
+
+        # ---- Vision status timer ----
+
+        self.vision_timer = QTimer()
+        self.vision_timer.setInterval(VISION_TIMEOUT_TIME)
+        self.vision_timer.setSingleShot(True)
+        self.vision_timer.timeout.connect(self.slot_vision_lost)
+
+        self.has_vision_connection = False
+
+        # ---- /Vision status timer ----
+
         # ---- Signal connections ----
 
         # Connect the signal sent by the worldstate callback to the message slot.
@@ -160,22 +209,67 @@ class WorldViewPlugin(Plugin):
         self.debug_point_signal.connect(self.slot_debug_point)
         self.debug_line_signal.connect(self.slot_debug_line)
 
+        self.halt_update_signal.connect(self.slot_halt_update)
+
+        # Toolbar connections.
+        self.toolbar.out_of_field_action.triggered.connect(self.world_view.put_robots_out_of_field)
+        self.toolbar.toggle_halt_button.clicked.connect(self.toggle_halt)
+        self.toolbar.reset_view_action.triggered.connect(self.world_view.reset_view)
+        self.toolbar.clear_debug_action.triggered.connect(self.world_view.clear_debug_drawings)
+
         # ---- /Signal connections ----
 
 
     def shutdown_plugin(self):
-        # TODO unregister all publishers here
         self.strategy_ignore_topic.unregister()
+        self.halt_pub.unregister()
+
+        self.debug_point_sub.unregister()
+        self.debug_line_sub.unregister()
+        self.worldstate_sub.unregister()
+        self.geometry_sub.unregister()
+        self.referee_sub.unregister()
+        self.halt_sub.unregister()
 
     def save_settings(self, plugin_settings, instance_settings):
         # TODO save intrinsic configuration, usually using:
         # instance_settings.set_value(k, v)
-        pass
+
+        topbar_proportions = self.vertical_splitter.sizes()
+        sidebar_proportions = self.horizontal_splitter.sizes()
+
+        instance_settings.set_value(SIDEBAR_PROPORTIONS_SETTINGS_NAME, json.dumps(sidebar_proportions))
+        instance_settings.set_value(TOPBAR_PROPORTIONS_SETTINGS_NAME, json.dumps(topbar_proportions))
+
+        instance_settings.set_value(SKILL_TESTER_STATE_NAME, json.dumps(self.multi_skill_tester.get_state()))
 
     def restore_settings(self, plugin_settings, instance_settings):
         # TODO restore intrinsic configuration, usually using:
         # v = instance_settings.value(k)
-        pass
+
+        sidebar_proportions_string = instance_settings.value(SIDEBAR_PROPORTIONS_SETTINGS_NAME)
+
+        try:
+            proportions = json.loads(sidebar_proportions_string)
+            self.horizontal_splitter.setSizes(proportions)
+        except ValueError, TypeError:
+            print >> sys.stderr, "Warning: World view couldn't load configuration: \"" + sidebar_proportions_string + "\""
+
+        topbar_proportions_string = instance_settings.value(TOPBAR_PROPORTIONS_SETTINGS_NAME)
+
+        try:
+            proportions = json.loads(topbar_proportions_string)
+            self.vertical_splitter.setSizes(proportions)
+        except ValueError, TypeError:
+            print >> sys.stderr, "Warning: World view couldn't load configuration: \"" + topbar_proportions_string + "\""
+
+        skill_tester_state_string = instance_settings.value(SKILL_TESTER_STATE_NAME)
+
+        try:
+            skill_tester_state = json.loads(skill_tester_state_string)
+            self.multi_skill_tester.set_state(skill_tester_state)
+        except ValueError, TypeError:
+            print >> sys.stderr, "Warning: World view couldn't load configuration: \"" + skill_tester_state_string + "\""
 
     #def trigger_configuration(self):
         # Comment in to signal that the plugin has a way to configure
@@ -203,6 +297,8 @@ class WorldViewPlugin(Plugin):
     def callback_debug_line(self, message):
         self.debug_line_signal.emit(message)
 
+    def callback_halt(self, message):
+        self.halt_update_signal.emit(message)
 
 # ------------------------------------------------------------------------------
 # ---------- Gui change slots --------------------------------------------------
@@ -212,6 +308,13 @@ class WorldViewPlugin(Plugin):
     def slot_worldstate(self, message):
         """Receives the changeUI(PyQt_PyObject) signal which gets sent when a message arrives at 'message_callback'."""
         self.world_view.update_world_state(message)
+
+        # Reset the vision timeout timer.
+        self.vision_timer.start()
+
+        if self.has_vision_connection == False:
+            self.toolbar.set_vision_status_indicator(True)
+            self.has_vision_connection = True
 
 
     def slot_geometry(self, message):
@@ -226,3 +329,23 @@ class WorldViewPlugin(Plugin):
 
     def slot_debug_line(self, message):
         self.world_view.set_debug_line(message)
+
+    def slot_halt_update(self, message):
+        self.is_halting = message.data
+        self.toolbar.halt_update(message)
+
+
+    def slot_vision_lost(self):
+        """Call when there hasn't been a packet from vision for a while."""
+        self.toolbar.set_vision_status_indicator(False)
+        self.has_vision_connection = False
+
+    def toggle_halt(self):
+        """
+        Called when the halt button is pressed. Sends an opposite halt command of the currently
+        known halt state.
+        """
+        message = std_msg.Bool()
+        message.data = not self.is_halting
+
+        self.halt_pub.publish(message)

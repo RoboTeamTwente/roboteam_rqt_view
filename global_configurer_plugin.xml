@@ -1,0 +1,21 @@
+<library path="src">
+  <class name="RoboTeam global configurer" type="rqt_global_configurer.rqt_global_configurer.GlobalConfigurerPlugin" base_class_type="rqt_gui_py::Plugin">
+    <description>
+      An example Python GUI plugin to create a great user interface.
+    </description>
+    <qtgui>
+      <group>
+        <label>RoboTeam Twente</label>
+        <icon type="file">icons/RoboTeamTwente.png</icon>
+      </group>
+      <!-- optional grouping...
+      <group>
+        <label>Subgroup</label>
+      </group>
+      -->
+      <label>RoboTeam global configurer</label>
+      <statustip>Great user interface to provide real value.</statustip>
+      <!--<icon type="file">RobotStatus.png</icon>-->
+    </qtgui>
+  </class>
+</library>

@@ -1,6 +1,6 @@
 from python_qt_binding.QtWidgets import QFrame, QLabel, QGridLayout, QPushButton, QComboBox, QLineEdit, QStackedWidget, QCheckBox
 from python_qt_binding.QtGui import QDoubleValidator, QRegExpValidator
-from python_qt_binding.QtCore import QRegExp
+from python_qt_binding.QtCore import QRegExp, Qt
 
 import unicodedata
 
@@ -20,6 +20,7 @@ class WidgetBlackboard(QFrame):
 
         # ---- Add item button ----
         self.add_item_button = QPushButton("Add value")
+        self.add_item_button.setFocusPolicy(Qt.ClickFocus)
         self.layout().addWidget(self.add_item_button, 0, 1, 1, 3)
         self.add_item_button.clicked.connect(self.slot_add_item)
         # ---- /Add item button ----
@@ -39,6 +40,22 @@ class WidgetBlackboard(QFrame):
         self.new_item_id = 0
 
         # ---- /Setup table ----
+
+
+    def get_state(self):
+        state = []
+
+        for item_id, item in self.blackboard_items.items():
+            item_state = item.get_state()
+            state.append(item_state)
+
+        return state
+
+
+    def set_state(self, state):
+        for item_state in state:
+            item = self.slot_add_item()
+            item.set_state(item_state)
 
 
     def get_blackboard_message(self):
@@ -106,6 +123,8 @@ class WidgetBlackboard(QFrame):
         self.new_item_id += 1
         self.insert_row += 1
 
+        return item
+
 
     def slot_remove_item(self, item_id):
         """Removes the blackboard item with id: item_id."""
@@ -145,6 +164,7 @@ class BlackboardItem():
         self.type_widget.insertItem(1, "Double")
         self.type_widget.insertItem(2, "Int")
         self.type_widget.insertItem(3, "Bool")
+        self.type_widget.setFocusPolicy(Qt.ClickFocus)
 
         # ---- Value widget ----
 
@@ -175,7 +195,9 @@ class BlackboardItem():
         # ---- /Value widget ----
 
         self.name_widget = QLineEdit()
+
         self.remove_widget = QPushButton("x")
+        self.remove_widget.setFocusPolicy(Qt.ClickFocus)
         self.remove_widget.setMinimumWidth(20)
         self.remove_widget.setSizePolicy(self.remove_widget.sizePolicy().Preferred, self.remove_widget.sizePolicy().Fixed)
 
@@ -183,6 +205,42 @@ class BlackboardItem():
 
         self.remove_widget.clicked.connect(self.slot_remove_widget_pressed)
         self.type_widget.currentIndexChanged.connect(self.slot_type_selection_changed)
+
+
+    def get_state(self):
+        state = dict()
+        typestring = self.type_widget.currentText()
+
+        state["typestring"] = typestring
+        state["name"] = self.name_widget.text()
+
+        if typestring == "String":
+            state["value"] = self.string_edit.text()
+        elif typestring == "Int":
+            state["value"] = self.int_edit.text()
+        elif typestring == "Double":
+            state["value"] = self.double_edit.text()
+        elif typestring == "Bool":
+            state["value"] = self.bool_edit.isChecked()
+
+        return state
+
+
+    def set_state(self, state):
+        typestring = state["typestring"]
+        self.type_widget.setCurrentText(typestring)
+
+        self.name_widget.setText(state["name"])
+
+        if typestring == "String":
+            self.string_edit.setText(state["value"])
+        elif typestring == "Int":
+            self.int_edit.setText(state["value"])
+        elif typestring == "Double":
+            self.double_edit.setText(state["value"])
+        elif typestring == "Bool":
+            checked = bool(state["value"])
+            self.bool_edit.setChecked(checked)
 
 
     def get_entry_message(self):
