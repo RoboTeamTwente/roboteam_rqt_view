@@ -1,5 +1,6 @@
 import subprocess32 as subprocess
 import sys
+import os
 
 from python_qt_binding import QtWidgets
 from python_qt_binding.QtGui import QRegExpValidator
@@ -7,6 +8,7 @@ from python_qt_binding.QtCore import QRegExp, pyqtSignal, Qt
 
 from widget_blackboard import WidgetBlackboard
 from rqt_world_view.utils import utils
+from rqt_world_view.items.NonScrollableQComboBox import NonScrollableQComboBox
 
 from roboteam_msgs import msg
 
@@ -57,8 +59,22 @@ class WidgetSkillTester(QtWidgets.QFrame):
 
         # ---- /Id entry ----
 
-        self.skill_entry = QtWidgets.QLineEdit()
+	# ---- Skill entry ----
+
+	self.skill_entry = NonScrollableQComboBox()
+	# Read the names of every file in the skills folder
+	skills = os.listdir(os.path.join(os.path.dirname(__file__), '../../../../roboteam_tactics/src/skills'))
+	# Remove tests and the CMake file. This should leave you with all known skills
+	skills.remove('tests')
+	skills.remove('CMakeLists.txt')
+	# Remove .cpp extension
+	for i in range(len(skills)):
+		skills[i] = skills[i][:-4]
+	skills.sort()
+	self.skill_entry.addItems(skills)
         self.layout().addWidget(self.skill_entry, 2, 1, 1, 2)
+
+	# ---- /Skill entry ----
 
         # ---- Blackboard ----
 

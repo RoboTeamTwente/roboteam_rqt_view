@@ -7,6 +7,8 @@ from python_qt_binding.QtCore import Qt
 # screw up the command when scrolling through the list
 # of commands. That is why we prefer to disable it.
 class NonScrollableQComboBox(QComboBox):
+	text = "NonScrollableQComboBox"
+
 	def __init__(self, *args, **kwargs):
 		super(NonScrollableQComboBox, self).__init__(*args, **kwargs)
 		self.setFocusPolicy(Qt.StrongFocus)
