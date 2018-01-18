@@ -432,6 +432,8 @@ class WidgetWorldView(QFrame):
                     # Positions need to be re-normalized. Because the test skills are expecting normalized positions.
                     command.append("double:xGoal=" + str( utils.mm_to_m(pos_x * normalize_value) ))
                     command.append("double:yGoal=" + str( utils.mm_to_m(pos_y * normalize_value) ))
+		    # Allow the robot to enter the defense areas
+		    command.append("bool:enterDefenseAreas=true")
                     print command
 
                     # Start the test.
