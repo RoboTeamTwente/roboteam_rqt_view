@@ -1,6 +1,8 @@
 import subprocess32 as subprocess
 import sys
 import os
+import rospkg
+import json
 
 from python_qt_binding import QtWidgets
 from python_qt_binding.QtGui import QRegExpValidator
@@ -16,6 +18,10 @@ from roboteam_msgs import msg
 ROSRUN = "rosrun"
 TESTX_PACKAGE = "roboteam_tactics"
 TESTX_COMMAND = "TestX"
+
+SKILLS = rospkg.RosPack().get_path('roboteam_tactics') + "/src/skills/"
+TREE_DIR = rospkg.RosPack().get_path('roboteam_tactics') + "/src/trees/json/"
+PROJECTS_DIR = rospkg.RosPack().get_path('roboteam_tactics') + "/src/trees/projects/"
 
 
 class WidgetSkillTester(QtWidgets.QFrame):
@@ -59,22 +65,42 @@ class WidgetSkillTester(QtWidgets.QFrame):
 
         # ---- /Id entry ----
 
+
 	# ---- Skill entry ----
 
 	self.skill_entry = NonScrollableQComboBox()
+	skills = []
 	# Read the names of every file in the skills folder
-	skills = os.listdir(os.path.join(os.path.dirname(__file__), '../../../../roboteam_tactics/src/skills'))
-	# Remove tests and the CMake file. This should leave all known skills
-	skills.remove('tests')
-	skills.remove('CMakeLists.txt')
-	# Remove .cpp extension
-	for i in range(len(skills)):
-		skills[i] = skills[i][:-4]
+	fileNames = os.listdir(SKILLS)
+	# Add those with a .cpp extension and remove that extension
+	for fileName in fileNames:
+		if fileName.endswith(".cpp"):
+			skills.append(fileName[:-4])
 	skills.sort()
+
+#	for file_name in os.listdir(TREE_DIR):
+#            if file_name.endswith(".json"):
+#
+#                with open(TREE_DIR + file_name) as data_file:
+#			data = json.load(data_file)
+#			print data		
+
+	strategies = []
+        for file_name in os.listdir(PROJECTS_DIR):
+		if file_name.endswith(".b3"):
+			with open(PROJECTS_DIR + file_name) as data_file:
+				data = json.load(data_file)['data']
+			if 'trees' in data:
+	                        for tree_data in data['trees']:
+					strategies.append(file_name[:-3] + "/" + tree_data['title'])
+	strategies.sort()
+
 	self.skill_entry.addItems(skills)
+	self.skill_entry.addItems(strategies)
         self.layout().addWidget(self.skill_entry, 2, 1, 1, 2)
 
 	# ---- /Skill entry ----
+
 
         # ---- Blackboard ----
 
