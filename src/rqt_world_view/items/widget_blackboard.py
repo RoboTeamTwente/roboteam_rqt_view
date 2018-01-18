@@ -1,7 +1,7 @@
 from python_qt_binding.QtWidgets import QFrame, QLabel, QGridLayout, QPushButton, QLineEdit, QStackedWidget, QCheckBox
 from python_qt_binding.QtGui import QDoubleValidator, QRegExpValidator
 from python_qt_binding.QtCore import QRegExp, Qt
-from rqt_world_view.items.NonScrollableQComboBox import NonScrollableQComboBox
+from rqt_world_view.items.non_scrollable_combo_box import NonScrollableQComboBox
 
 
 import unicodedata

@@ -8,7 +8,7 @@ from python_qt_binding.QtCore import QRegExp, pyqtSignal, Qt
 
 from widget_blackboard import WidgetBlackboard
 from rqt_world_view.utils import utils
-from rqt_world_view.items.NonScrollableQComboBox import NonScrollableQComboBox
+from rqt_world_view.items.non_scrollable_combo_box import NonScrollableQComboBox
 
 from roboteam_msgs import msg
 
@@ -64,7 +64,7 @@ class WidgetSkillTester(QtWidgets.QFrame):
 	self.skill_entry = NonScrollableQComboBox()
 	# Read the names of every file in the skills folder
 	skills = os.listdir(os.path.join(os.path.dirname(__file__), '../../../../roboteam_tactics/src/skills'))
-	# Remove tests and the CMake file. This should leave you with all known skills
+	# Remove tests and the CMake file. This should leave all known skills
 	skills.remove('tests')
 	skills.remove('CMakeLists.txt')
 	# Remove .cpp extension
@@ -109,7 +109,7 @@ class WidgetSkillTester(QtWidgets.QFrame):
         """
         state = dict()
         state["id"] = self.id_entry.text()
-        state["skill"] = self.skill_entry.text()
+        state["skill"] = str(self.skill_entry.currentText())
 
         state["blackboard"] = self.blackboard.get_state()
 
@@ -118,7 +118,8 @@ class WidgetSkillTester(QtWidgets.QFrame):
     def set_state(self, state):
         try:
             self.id_entry.setText(state["id"])
-            self.skill_entry.setText(state["skill"])
+            index = self.skill_entry.findText(state["skill"])
+            self.skill_entry.setCurrentIndex(index if index >= 0 else 0)
             self.blackboard.set_state(state["blackboard"])
         except KeyError:
             print >> sys.stderr, "Warning: Skill tester couldn't parse state: \"" + str(state) + "\""
@@ -228,7 +229,7 @@ class WidgetSkillTester(QtWidgets.QFrame):
         if not self.is_test_running():
             # Construct the rosrun TestX command.
             command = [ROSRUN, TESTX_PACKAGE, TESTX_COMMAND]
-            skill = str(self.skill_entry.text())
+            skill = str(self.skill_entry.currentText())
             command.append(skill)
 
             # Read the id of the bot to be tested.
