@@ -78,14 +78,13 @@ class WidgetSkillTester(QtWidgets.QFrame):
 			skills.append(fileName[:-4])
 	skills.sort()
 
-#	for file_name in os.listdir(TREE_DIR):
-#            if file_name.endswith(".json"):
-#
-#                with open(TREE_DIR + file_name) as data_file:
-#			data = json.load(data_file)
-#			print data		
-
 	strategies = []
+	for file_name in os.listdir(TREE_DIR):
+		if file_name.endswith(".json"):
+		        with open(TREE_DIR + file_name) as data_file:
+				data = json.load(data_file)
+			strategies.append(file_name[:-5])
+
         for file_name in os.listdir(PROJECTS_DIR):
 		if file_name.endswith(".b3"):
 			with open(PROJECTS_DIR + file_name) as data_file:
