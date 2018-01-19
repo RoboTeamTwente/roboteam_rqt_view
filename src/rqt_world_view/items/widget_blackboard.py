@@ -201,7 +201,7 @@ class BlackboardItem():
 
 	# ---- Param widget ----
         self.param_widget = NonScrollableQComboBox()
-	self.param_widget.currentIndexChanged.connect(slot_type_selection_changed)
+	self.param_widget.currentIndexChanged.connect(self.slot_type_selection_changed)
 
 	if self.parameters is None:
 		self.param_widget.insertItem(0, "No parameters")
@@ -294,7 +294,7 @@ class BlackboardItem():
         msg.Float64Entry
         msg.BoolEntry
         """
-        typestring = self.type_widget.currentText()
+	typestring = self.parameters[self.param_widget.currentText()]['Type']
 
         if typestring == "String":
             item = msg.StringEntry()
@@ -341,7 +341,7 @@ class BlackboardItem():
             "Bool": "bool"
         }
 
-        typestring = type_mapping.get(self.type_widget.currentText(), "")
+        typestring = type_mapping.get(self.parameters[self.param_widget.currentText()]['Type'], "")
 
         if typestring != "":
             name = unicodedata.normalize('NFKD', self.name_widget.text()).encode('ascii','ignore')
