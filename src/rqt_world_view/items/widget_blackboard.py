@@ -201,6 +201,8 @@ class BlackboardItem():
 
 	# ---- Param widget ----
         self.param_widget = NonScrollableQComboBox()
+	self.param_widget.currentIndexChanged.connect(slot_type_selection_changed)
+
 	if self.parameters is None:
 		self.param_widget.insertItem(0, "No parameters")
 	else:
@@ -396,3 +398,16 @@ class BlackboardItem():
 
     def slot_remove_widget_pressed(self):
         self.remove_callback(self.id)
+
+
+    def slot_type_selection_changed(self, index):
+        """This slot is connected to the param_widget combobox currentIndexChanged()."""
+
+        # Clear the inputs.
+        self.string_edit.clear()
+        self.double_edit.clear()
+        self.int_edit.clear()
+        self.bool_edit.setChecked(False)
+
+        # Change the visible input.
+        self.value_widget.setCurrentIndex(index)
