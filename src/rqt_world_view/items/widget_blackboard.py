@@ -31,6 +31,7 @@ class WidgetBlackboard(QFrame):
         # ---- Add item button ----
         self.add_item_button = QPushButton("Add value")
         self.add_item_button.setFocusPolicy(Qt.ClickFocus)
+	self.add_item_button.setEnabled(self.parameters is not None)
         self.layout().addWidget(self.add_item_button, 0, 1, 1, 3)
         self.add_item_button.clicked.connect(self.slot_add_item)
         # ---- /Add item button ----
@@ -157,7 +158,7 @@ class WidgetBlackboard(QFrame):
 
 	filePath = SKILLS + skill + '.h'
 
-	# Check if the file exists. If it doesn't exist, it is not a skill but most likely a strategy
+	# Check if the file exists. If it doesn't exist, it is not a skill and most likely a strategy
 	if not os.path.isfile(filePath):
 		return None
 
@@ -165,25 +166,39 @@ class WidgetBlackboard(QFrame):
 	with open(filePath, 'r') as skillFile:
 	    data = skillFile.read()
 
-	# Regex to match comments starting with /* and ending with */
+	# Regex to match comments starting with "/*" and ending with "*/"
 	regex = r"(\/\*([^*]|[\r\n]|(\*+([^*/]|[\r\n])))*\*+\/)"
 	if re.search(regex, data):
 
-		# Two matches. First contains the class name which we already know.
-		# The second match consists of multiple items. Not sure why. The first one is the one we are after
-		match = re.findall(regex, data)[1][0]
+		matches = re.findall(regex, data)
+		# Most of the time results in two matches. First contains the class name the other parameter info
+		# If it only contains one match we assume it is only the parameter info
+		if len(matches) == 1:
+			match = matches[0][0]
+		else:
+			match = matches[1][0]
 		match = match.replace("*", "").replace("/", "")
 
 		try:
 			yamlData = yaml.load(match)
 		except yaml.YAMLError, exc:
+			if hasattr(exc, 'problem_mark'):
+				mark = exc.problem_mark
+				print "YAML parse error. Position: (%s:%s)" % (mark.line+1, mark.column+1)
 			return None
+		if 'Params' not in yamlData:
+			return None
+
 		# Convert array to dictionary
 		parameters = {}
 		for param in yamlData['Params']:
-			parameters[param.keys()[0]] = param.get(param.keys()[0])
-		return parameters
+			# Filter out ROBOT_ID, since it is already defined elsewhere in the gui
+			if param.keys()[0] != "ROBOT_ID":
+				parameters[param.keys()[0]] = param.get(param.keys()[0])
+
+		return parameters if len(parameters) > 0 else None
 	else:
+		# No YAML. Assuming that no parameters can be set
 		return None
 
 
@@ -201,13 +216,13 @@ class BlackboardItem():
 
 	# ---- Param widget ----
         self.param_widget = NonScrollableQComboBox()
-	self.param_widget.currentIndexChanged.connect(self.slot_type_selection_changed)
 
 	if self.parameters is None:
 		self.param_widget.insertItem(0, "No parameters")
 	else:
+		sortedParameters = sorted(parameters, key=lambda s: s.lower())
 		for i in range(len(parameters.keys())):
-			self.param_widget.insertItem(i, self.parameters.keys()[i])
+			self.param_widget.insertItem(i, sortedParameters[i])
 	# ---- /Param widget ----
 
 
@@ -237,7 +252,6 @@ class BlackboardItem():
         self.bool_edit = QCheckBox()
         self.value_widget.addWidget(self.bool_edit)
 
-	self.set_editable_values(self.parameters is not None)
         # ---- /Value widget ----
 
         self.remove_widget = QPushButton("x")
@@ -248,6 +262,8 @@ class BlackboardItem():
         # ---- Connect signals ----
 
         self.remove_widget.clicked.connect(self.slot_remove_widget_pressed)
+
+	self.param_widget.currentIndexChanged.connect(self.slot_type_selection_changed)
 
 
     def get_state(self):
@@ -298,12 +314,12 @@ class BlackboardItem():
 
         if typestring == "String":
             item = msg.StringEntry()
-            item.name = self.name_widget.text()
+            item.name = self.param_widget.currentText()
             item.value = self.string_edit.text()
             return item
         elif typestring == "Int":
             item = msg.Int32Entry()
-            item.name = self.name_widget.text()
+            item.name = self.param_widget.currentText()
             try:
                 item.value = int(self.int_edit.text())
             except ValueError, e:
@@ -311,7 +327,7 @@ class BlackboardItem():
             return item
         elif typestring == "Double":
             item = msg.Float64Entry()
-            item.name = self.name_widget.text()
+            item.name = self.param_widget.currentText()
             try:
                 item.value = float(self.double_edit.text())
             except ValueError, e:
@@ -319,7 +335,7 @@ class BlackboardItem():
             return item
         elif typestring == "Bool":
             item = msg.BoolEntry()
-            item.name = self.name_widget.text()
+            item.name = self.param_widget.currentText()
             item.value = self.bool_edit.isChecked()
             return item
 
@@ -344,7 +360,7 @@ class BlackboardItem():
         typestring = type_mapping.get(self.parameters[self.param_widget.currentText()]['Type'], "")
 
         if typestring != "":
-            name = unicodedata.normalize('NFKD', self.name_widget.text()).encode('ascii','ignore')
+            name = unicodedata.normalize('NFKD', self.param_widget.currentText()).encode('ascii','ignore')
 
             # If there is no name, return an empty string.
             if name == "":
@@ -385,16 +401,6 @@ class BlackboardItem():
         self.bool_edit.setEnabled(editable)
         self.remove_widget.setEnabled(editable)
 
-    def set_editable_values(self, editable):
-	"""
-        Changes whether the entries options are editable.
-        editable: boolean
-        """
-        self.string_edit.setEnabled(editable)
-        self.double_edit.setEnabled(editable)
-        self.int_edit.setEnabled(editable)
-        self.bool_edit.setEnabled(editable)
-
 
     def slot_remove_widget_pressed(self):
         self.remove_callback(self.id)
@@ -410,7 +416,7 @@ class BlackboardItem():
         self.bool_edit.setChecked(False)
 
         # Change the visible input.
-	requiredType = parameters[self.param_widget.currentText()]['Type']
+	requiredType = self.parameters[self.param_widget.currentText()]['Type']
 	if requiredType == 'String':
 		self.value_widget.setCurrentIndex(0)
 	elif requiredType == 'Double':
