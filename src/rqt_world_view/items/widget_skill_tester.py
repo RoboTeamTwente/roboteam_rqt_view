@@ -69,6 +69,8 @@ class WidgetSkillTester(QtWidgets.QFrame):
 	# ---- Skill entry ----
 
 	self.skill_entry = NonScrollableQComboBox()
+	# Recreate the blackboard every time the skill/strategy has changed
+	self.skill_entry.currentIndexChanged.connect(self.create_blackboard)
 	skills = []
 	# Read the names of every file in the skills folder
 	fileNames = os.listdir(SKILLS)
@@ -79,6 +81,7 @@ class WidgetSkillTester(QtWidgets.QFrame):
 	skills.sort()
 
 	strategies = []
+	# Find all strategies in the trees
 	for file_name in os.listdir(TREE_DIR):
 		if file_name.endswith(".json"):
 		        with open(TREE_DIR + file_name) as data_file:
@@ -100,20 +103,6 @@ class WidgetSkillTester(QtWidgets.QFrame):
 
 	# ---- /Skill entry ----
 
-
-        # ---- Blackboard ----
-
-        self.blackboard = WidgetBlackboard()
-        self.blackboard.layout().setContentsMargins(2, 2, 2, 5)
-        self.blackboard.setFrameStyle(QtWidgets.QFrame.Panel | QtWidgets.QFrame.Sunken)
-        self.layout().addWidget(self.blackboard, 3, 0, 1, 3)
-
-        # Set the tab order so that pressing tab on the skill entry
-        # will lead to the blackboard fields.
-        self.setTabOrder(self.skill_entry, self.blackboard)
-
-        # ---- /Blackboard ----
-
         # ---- Process ----
 
         # Process handle for the TestX programm.
@@ -123,6 +112,22 @@ class WidgetSkillTester(QtWidgets.QFrame):
         self.bot_test_id = None
 
         self.test_stopped_signal.connect(self.slot_on_test_exit)
+
+
+    def create_blackboard(self):
+	# Remove the currect blackboard if it exists
+	if hasattr(self, 'blackboard'):
+        	self.blackboard.deleteLater()
+		self.blackboard = None
+	# Create a new blackboard and pass along the selected skill/strategy
+        self.blackboard = WidgetBlackboard(self.skill_entry.currentText())
+        self.blackboard.layout().setContentsMargins(2, 2, 2, 5)
+        self.blackboard.setFrameStyle(QtWidgets.QFrame.Panel | QtWidgets.QFrame.Sunken)
+        self.layout().addWidget(self.blackboard, 3, 0, 1, 3)
+
+        # Set the tab order so that pressing tab on the skill entry
+        # will lead to the blackboard fields.
+        self.setTabOrder(self.skill_entry, self.blackboard)
 
 
     def get_state(self):

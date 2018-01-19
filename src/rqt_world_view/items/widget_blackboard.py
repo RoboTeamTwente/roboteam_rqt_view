@@ -3,16 +3,24 @@ from python_qt_binding.QtGui import QDoubleValidator, QRegExpValidator
 from python_qt_binding.QtCore import QRegExp, Qt
 from rqt_world_view.items.non_scrollable_combo_box import NonScrollableQComboBox
 
-
+import rospkg
 import unicodedata
+import re
+import yaml
+import os.path
 
 from roboteam_msgs import msg
+
+SKILLS = rospkg.RosPack().get_path('roboteam_tactics') + "/include/roboteam_tactics/skills/"
 
 
 class WidgetBlackboard(QFrame):
 
-    def __init__(self):
+    def __init__(self, skill):
+
         super(WidgetBlackboard, self).__init__()
+
+	self.parameters = self.get_parameters(skill)
 
         self.setLayout(QGridLayout())
 
@@ -29,9 +37,8 @@ class WidgetBlackboard(QFrame):
 
         # ---- Setup table ----
 
-        self.layout().addWidget(QLabel("Type"), 1, 0)
-        self.layout().addWidget(QLabel("Name"), 1, 1)
-        self.layout().addWidget(QLabel("Value"), 1, 2)
+        self.layout().addWidget(QLabel("Parameter"), 1, 0)
+        self.layout().addWidget(QLabel("Value"), 1, 1)
 
         self.blackboard_items = {}
 
@@ -113,13 +120,12 @@ class WidgetBlackboard(QFrame):
 
     def slot_add_item(self):
         """Adds a new blackboard item."""
-        item = BlackboardItem(self.new_item_id, self.slot_remove_item)
+        item = BlackboardItem(self.new_item_id, self.slot_remove_item, self.parameters)
         self.blackboard_items[self.new_item_id] = item
-
-        self.layout().addWidget(item.type_widget, self.insert_row, 0)
-        self.layout().addWidget(item.name_widget, self.insert_row, 1)
-        self.layout().addWidget(item.value_widget, self.insert_row, 2)
-        self.layout().addWidget(item.remove_widget, self.insert_row, 3)
+	
+        self.layout().addWidget(item.param_widget, self.insert_row, 0)
+        self.layout().addWidget(item.value_widget, self.insert_row, 1)
+        self.layout().addWidget(item.remove_widget, self.insert_row, 2)
         item.remove_widget.setMaximumWidth(30)
 
         self.new_item_id += 1
@@ -132,15 +138,12 @@ class WidgetBlackboard(QFrame):
         """Removes the blackboard item with id: item_id."""
         item = self.blackboard_items[item_id]
 
-        self.layout().removeWidget(item.type_widget)
-        self.layout().removeWidget(item.name_widget)
+        self.layout().removeWidget(item.param_widget)
         self.layout().removeWidget(item.value_widget)
         self.layout().removeWidget(item.remove_widget)
 
-        item.type_widget.deleteLater()
-        item.type_widget = None
-        item.name_widget.deleteLater()
-        item.name_widget = None
+        item.param_widget.deleteLater()
+        item.param_widget = None
         item.value_widget.deleteLater()
         item.value_widget = None
         item.remove_widget.deleteLater()
@@ -149,9 +152,44 @@ class WidgetBlackboard(QFrame):
         del self.blackboard_items[item_id]
 
 
+    def get_parameters(self, skill):
+	"""Get all information from a skill that is described in YAML"""
+
+	filePath = SKILLS + skill + '.h'
+
+	# Check if the file exists. If it doesn't exist, it is not a skill but most likely a strategy
+	if not os.path.isfile(filePath):
+		return None
+
+	# Read the header file of the skill
+	with open(filePath, 'r') as skillFile:
+	    data = skillFile.read()
+
+	# Regex to match comments starting with /* and ending with */
+	regex = r"(\/\*([^*]|[\r\n]|(\*+([^*/]|[\r\n])))*\*+\/)"
+	if re.search(regex, data):
+
+		# Two matches. First contains the class name which we already know.
+		# The second match consists of multiple items. Not sure why. The first one is the one we are after
+		match = re.findall(regex, data)[1][0]
+		match = match.replace("*", "").replace("/", "")
+
+		try:
+			yamlData = yaml.load(match)
+		except yaml.YAMLError, exc:
+			return None
+		# Convert array to dictionary
+		parameters = {}
+		for param in yamlData['Params']:
+			parameters[param.keys()[0]] = param.get(param.keys()[0])
+		return parameters
+	else:
+		return None
+
+
 class BlackboardItem():
 
-    def __init__(self, item_id, remove_callback):
+    def __init__(self, item_id, remove_callback, parameters):
         """
         Remove_callback is the function to call when the
         remove button is pressed.
@@ -159,12 +197,17 @@ class BlackboardItem():
 
         self.id = item_id
         self.remove_callback = remove_callback
+	self.parameters = parameters
 
-        self.type_widget = NonScrollableQComboBox()
-        self.type_widget.insertItem(0, "String")
-        self.type_widget.insertItem(1, "Double")
-        self.type_widget.insertItem(2, "Int")
-        self.type_widget.insertItem(3, "Bool")
+	# ---- Param widget ----
+        self.param_widget = NonScrollableQComboBox()
+	if self.parameters is None:
+		self.param_widget.insertItem(0, "No parameters")
+	else:
+		for i in range(len(parameters.keys())):
+			self.param_widget.insertItem(i, self.parameters.keys()[i])
+	# ---- /Param widget ----
+
 
         # ---- Value widget ----
 
@@ -192,9 +235,8 @@ class BlackboardItem():
         self.bool_edit = QCheckBox()
         self.value_widget.addWidget(self.bool_edit)
 
+	self.set_editable_values(self.parameters is not None)
         # ---- /Value widget ----
-
-        self.name_widget = QLineEdit()
 
         self.remove_widget = QPushButton("x")
         self.remove_widget.setFocusPolicy(Qt.ClickFocus)
@@ -204,15 +246,14 @@ class BlackboardItem():
         # ---- Connect signals ----
 
         self.remove_widget.clicked.connect(self.slot_remove_widget_pressed)
-        self.type_widget.currentIndexChanged.connect(self.slot_type_selection_changed)
 
 
     def get_state(self):
-        state = dict()
-        typestring = self.type_widget.currentText()
+	state = {}
+        state["param"] = self.param_widget.currentText()
 
+	typestring = self.parameters[self.param_widget.currentText()]['Type']
         state["typestring"] = typestring
-        state["name"] = self.name_widget.text()
 
         if typestring == "String":
             state["value"] = self.string_edit.text()
@@ -228,9 +269,9 @@ class BlackboardItem():
 
     def set_state(self, state):
         typestring = state["typestring"]
-        self.type_widget.setCurrentText(typestring)
 
-        self.name_widget.setText(state["name"])
+	index = self.param_widget.findText(state["param"])
+        self.param_widget.setCurrentIndex(index if index >= 0 else 0)
 
         if typestring == "String":
             self.string_edit.setText(state["value"])
@@ -335,27 +376,23 @@ class BlackboardItem():
         Changes whether the entries options are editable.
         editable: boolean
         """
-        self.type_widget.setEnabled(editable)
-        self.name_widget.setEnabled(editable)
+        self.param_widget.setEnabled(editable)
         self.string_edit.setEnabled(editable)
         self.double_edit.setEnabled(editable)
         self.int_edit.setEnabled(editable)
         self.bool_edit.setEnabled(editable)
         self.remove_widget.setEnabled(editable)
 
+    def set_editable_values(self, editable):
+	"""
+        Changes whether the entries options are editable.
+        editable: boolean
+        """
+        self.string_edit.setEnabled(editable)
+        self.double_edit.setEnabled(editable)
+        self.int_edit.setEnabled(editable)
+        self.bool_edit.setEnabled(editable)
+
 
     def slot_remove_widget_pressed(self):
         self.remove_callback(self.id)
-
-
-    def slot_type_selection_changed(self, index):
-        """This slot is connected to the type_widget combobox currentIndexChanged()."""
-
-        # Clear the inputs.
-        self.string_edit.clear()
-        self.double_edit.clear()
-        self.int_edit.clear()
-        self.bool_edit.setChecked(False)
-
-        # Change the visible input.
-        self.value_widget.setCurrentIndex(index)
