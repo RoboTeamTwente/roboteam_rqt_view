@@ -410,4 +410,14 @@ class BlackboardItem():
         self.bool_edit.setChecked(False)
 
         # Change the visible input.
-        self.value_widget.setCurrentIndex(index)
+	requiredType = parameters[self.param_widget.currentText()]['Type']
+	if requiredType == 'String':
+		...
+	elif requiredType == 'Double':
+		...
+	elif requiredType == 'Int':
+		...
+	elif requiredType == 'Bool':
+		...
+	else:
+	     
