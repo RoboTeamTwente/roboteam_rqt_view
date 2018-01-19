@@ -412,12 +412,12 @@ class BlackboardItem():
         # Change the visible input.
 	requiredType = parameters[self.param_widget.currentText()]['Type']
 	if requiredType == 'String':
-		...
+		self.value_widget.setCurrentIndex(0)
 	elif requiredType == 'Double':
-		...
+		self.value_widget.setCurrentIndex(1)
 	elif requiredType == 'Int':
-		...
+		self.value_widget.setCurrentIndex(2)
 	elif requiredType == 'Bool':
-		...
+		self.value_widget.setCurrentIndex(3)
 	else:
-	     
+		self.value_widget.setCurrentIndex(0)
