@@ -218,10 +218,17 @@ class BlackboardItem():
 
 	if self.parameters is None:
 		self.param_widget.insertItem(0, "No parameters")
+		self.param_widget.setItemData(0, "This skill has no parameters", Qt.ToolTipRole)
 	else:
 		sortedParameters = sorted(parameters, key=lambda s: s.lower())
 		for i in range(len(parameters.keys())):
-			self.param_widget.insertItem(i, sortedParameters[i])
+			parameter = sortedParameters[i]
+			self.param_widget.insertItem(i, parameter)
+			if 'Descr' in parameters[parameter]:
+				description = parameters[parameter]['Descr']
+			else:
+				description = 'No description available'
+			self.param_widget.setItemData(i, description, Qt.ToolTipRole)
 	# ---- /Param widget ----
 
 
@@ -262,9 +269,7 @@ class BlackboardItem():
         self.remove_widget.setSizePolicy(self.remove_widget.sizePolicy().Preferred, self.remove_widget.sizePolicy().Fixed)
 
         # ---- Connect signals ----
-
         self.remove_widget.clicked.connect(self.slot_remove_widget_pressed)
-
 	self.param_widget.currentIndexChanged.connect(self.slot_type_selection_changed)
 
 
