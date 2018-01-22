@@ -184,7 +184,7 @@ class WidgetBlackboard(QFrame):
 		except yaml.YAMLError, exc:
 			if hasattr(exc, 'problem_mark'):
 				mark = exc.problem_mark
-				print "YAML parse error. Position: (%s:%s)" % (mark.line+1, mark.column+1)
+				print "YAML parse error in file " + filePath + ". Position: (%s:%s)" % (mark.line+1, mark.column+1)
 			return None
 		if 'Params' not in yamlData:
 			return None
@@ -195,7 +195,6 @@ class WidgetBlackboard(QFrame):
 			# Filter out ROBOT_ID, since it is already defined elsewhere in the gui
 			if param.keys()[0] != "ROBOT_ID":
 				parameters[param.keys()[0]] = param.get(param.keys()[0])
-
 		return parameters if len(parameters) > 0 else None
 	else:
 		# No YAML. Assuming that no parameters can be set
@@ -252,6 +251,9 @@ class BlackboardItem():
         self.bool_edit = QCheckBox()
         self.value_widget.addWidget(self.bool_edit)
 
+	# Make value widget show correct input
+	self.slot_type_selection_changed(self.param_widget.currentIndex())
+
         # ---- /Value widget ----
 
         self.remove_widget = QPushButton("x")
@@ -281,7 +283,6 @@ class BlackboardItem():
             state["value"] = self.double_edit.text()
         elif typestring == "Bool":
             state["value"] = self.bool_edit.isChecked()
-
         return state
 
 
@@ -415,15 +416,25 @@ class BlackboardItem():
         self.int_edit.clear()
         self.bool_edit.setChecked(False)
 
-        # Change the visible input.
-	requiredType = self.parameters[self.param_widget.currentText()]['Type']
+        # Change the visible input and set default value if present
+	parameter = self.parameters[self.param_widget.currentText()]
+	
+	requiredType = parameter['Type']
+	if 'Default' in parameter:
+		defaultValue = parameter['Default']
+	else:
+		defaultValue = ""
 	if requiredType == 'String':
 		self.value_widget.setCurrentIndex(0)
+		self.string_edit.setText(defaultValue)
 	elif requiredType == 'Double':
 		self.value_widget.setCurrentIndex(1)
+		self.double_edit.setText(str(defaultValue))
 	elif requiredType == 'Int':
 		self.value_widget.setCurrentIndex(2)
+		self.int_edit.setText(str(defaultValue))
 	elif requiredType == 'Bool':
 		self.value_widget.setCurrentIndex(3)
+		self.bool_edit.setChecked(defaultValue != "" and defaultValue)
 	else:
 		self.value_widget.setCurrentIndex(0)
