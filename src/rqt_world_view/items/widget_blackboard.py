@@ -2,16 +2,11 @@ from python_qt_binding.QtWidgets import QFrame, QLabel, QGridLayout, QPushButton
 from python_qt_binding.QtGui import QDoubleValidator, QRegExpValidator
 from python_qt_binding.QtCore import QRegExp, Qt
 from rqt_world_view.items.non_scrollable_combo_box import NonScrollableQComboBox
+from rqt_world_view.utils import yaml_helper
 
-import rospkg
 import unicodedata
-import re
-import yaml
-import os.path
 
 from roboteam_msgs import msg
-
-SKILLS = rospkg.RosPack().get_path('roboteam_tactics') + "/include/roboteam_tactics/skills/"
 
 
 class WidgetBlackboard(QFrame):
@@ -20,7 +15,7 @@ class WidgetBlackboard(QFrame):
 
         super(WidgetBlackboard, self).__init__()
 
-	self.parameters = self.get_parameters(skill)
+	self.parameters = yaml_helper.get_parameters(skill)
 
         self.setLayout(QGridLayout())
 
@@ -153,54 +148,6 @@ class WidgetBlackboard(QFrame):
         del self.blackboard_items[item_id]
 
 
-    def get_parameters(self, skill):
-	"""Get all information from a skill that is described in YAML"""
-
-	filePath = SKILLS + skill + '.h'
-
-	# Check if the file exists. If it doesn't exist, it is not a skill and most likely a strategy
-	if not os.path.isfile(filePath):
-		return None
-
-	# Read the header file of the skill
-	with open(filePath, 'r') as skillFile:
-	    data = skillFile.read()
-
-	# Regex to match comments starting with "/*" and ending with "*/"
-	regex = r"(\/\*([^*]|[\r\n]|(\*+([^*/]|[\r\n])))*\*+\/)"
-	if re.search(regex, data):
-
-		matches = re.findall(regex, data)
-		# Most of the time results in two matches. First contains the class name the other parameter info
-		# If it only contains one match we assume it is only the parameter info
-		if len(matches) == 1:
-			match = matches[0][0]
-		else:
-			match = matches[1][0]
-		match = match.replace("*", "").replace("/", "")
-
-		try:
-			yamlData = yaml.load(match)
-		except yaml.YAMLError, exc:
-			if hasattr(exc, 'problem_mark'):
-				mark = exc.problem_mark
-				print "YAML parse error in file " + filePath + ". Position: (%s:%s)" % (mark.line+1, mark.column+1)
-			return None
-		if 'Params' not in yamlData:
-			return None
-
-		# Convert array to dictionary
-		parameters = {}
-		for param in yamlData['Params']:
-			# Filter out ROBOT_ID, since it is already defined elsewhere in the gui
-			if param.keys()[0] != "ROBOT_ID":
-				parameters[param.keys()[0]] = param.get(param.keys()[0])
-		return parameters if len(parameters) > 0 else None
-	else:
-		# No YAML. Assuming that no parameters can be set
-		return None
-
-
 class BlackboardItem():
 
     def __init__(self, item_id, remove_callback, parameters):
@@ -221,6 +168,8 @@ class BlackboardItem():
 		self.param_widget.setItemData(0, "This skill has no parameters", Qt.ToolTipRole)
 	else:
 		sortedParameters = sorted(parameters, key=lambda s: s.lower())
+		
+		# Add descriptions to the parameters in the dropdown
 		for i in range(len(parameters.keys())):
 			parameter = sortedParameters[i]
 			self.param_widget.insertItem(i, parameter)

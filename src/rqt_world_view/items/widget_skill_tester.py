@@ -11,6 +11,7 @@ from python_qt_binding.QtCore import QRegExp, pyqtSignal, Qt
 from widget_blackboard import WidgetBlackboard
 from rqt_world_view.utils import utils
 from rqt_world_view.items.non_scrollable_combo_box import NonScrollableQComboBox
+from rqt_world_view.utils import yaml_helper
 
 from roboteam_msgs import msg
 
@@ -22,7 +23,6 @@ TESTX_COMMAND = "TestX"
 SKILLS = rospkg.RosPack().get_path('roboteam_tactics') + "/src/skills/"
 TREE_DIR = rospkg.RosPack().get_path('roboteam_tactics') + "/src/trees/json/"
 PROJECTS_DIR = rospkg.RosPack().get_path('roboteam_tactics') + "/src/trees/projects/"
-
 
 class WidgetSkillTester(QtWidgets.QFrame):
 
@@ -69,12 +69,13 @@ class WidgetSkillTester(QtWidgets.QFrame):
 	# ---- Skill entry ----
 
 	self.skill_entry = NonScrollableQComboBox()
+
 	# Recreate the blackboard every time the skill/strategy has changed
 	self.skill_entry.currentIndexChanged.connect(self.create_blackboard)
 	skills = []
 	# Read the names of every file in the skills folder
 	fileNames = os.listdir(SKILLS)
-	# Add those with a .cpp extension and remove that extension
+	# Add those with a .cpp extension and remove that extension in the code
 	for fileName in fileNames:
 		if fileName.endswith(".cpp"):
 			skills.append(fileName[:-4])
@@ -96,9 +97,20 @@ class WidgetSkillTester(QtWidgets.QFrame):
 	                        for tree_data in data['trees']:
 					strategies.append(file_name[:-3] + "/" + tree_data['title'])
 	strategies.sort()
-
+	
+	# Set tooltips for skills
 	self.skill_entry.addItems(skills)
+	descriptions = yaml_helper.get_skill_descriptions(skills)
+	for i in range(len(skills)):
+		description = descriptions[i][1] if descriptions[i][1] is not None else "No description available"
+		print description
+		self.skill_entry.setItemData(i, description, Qt.ToolTipRole)
+	
+	# Strategies don't have descriptions up until now
 	self.skill_entry.addItems(strategies)
+	for i in range(len(strategies)):
+		self.skill_entry.setItemData(i + len(skills), "No description available", Qt.ToolTipRole)
+
         self.layout().addWidget(self.skill_entry, 2, 1, 1, 2)
 
 	# ---- /Skill entry ----
