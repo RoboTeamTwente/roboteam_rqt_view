@@ -2,11 +2,15 @@ import re
 import yaml
 import os.path
 import rospkg
+import sys
 
 SKILL_HEADERS = rospkg.RosPack().get_path('roboteam_tactics') + "/include/roboteam_tactics/skills/"
 
 def get_parameters(skill):
 	"""Get all parameter information from a skill that is described in YAML"""
+
+
+	# ---- Read file ----
 
 	filePath = SKILL_HEADERS + skill + '.h'
 
@@ -17,6 +21,11 @@ def get_parameters(skill):
 	# Read the header file of the skill
 	with open(filePath, 'r') as skillFile:
 		data = skillFile.read()
+
+	# ---- /Read file ----
+
+
+	# ---- YAML ----
 
 	# Regex to match comments starting with "/*" and ending with "*/"
 	regex = r"(\/\*([^*]|[\r\n]|(\*+([^*/]|[\r\n])))*\*+\/)"
@@ -35,7 +44,7 @@ def get_parameters(skill):
 		except yaml.YAMLError, exc:
 			if hasattr(exc, 'problem_mark'):
 				mark = exc.problem_mark
-				print "YAML parse error in file " + filePath + ". Position: (%s:%s)" % (mark.line+1, mark.column+1)
+				print >> sys.stderr, "YAML parse error in file " + filePath + ". Position: (%s:%s)" % (mark.line+1, mark.column+1)
 			return None
 		if 'Params' not in yamlData:
 			return None
@@ -51,6 +60,8 @@ def get_parameters(skill):
 		# No YAML. Assuming that no parameters can be set
 		return None
 
+	# ---- /YAML ----
+
 
 def get_skill_descriptions(skills):
 	"""Get descriptions from skills as described in the YAML in their header files"""
@@ -58,6 +69,10 @@ def get_skill_descriptions(skills):
 	# Result will be a list of (skill, description) tuples
 	result = []
 	for i in range(len(skills)):
+
+
+		# ---- Read files ----
+
 		filePath = SKILL_HEADERS + skills[i] + '.h'
 
 		# Check if the file exists. If it doesn't exist, it is not a skill and most likely a strategy.
@@ -69,6 +84,11 @@ def get_skill_descriptions(skills):
 		# Read the header file of the skill
 		with open(filePath, 'r') as skillFile:
 			data = skillFile.read()
+
+		# ---- /Read files ----
+
+
+		# ---- YAML ----
 
 		# Regex to match comments starting with "/*" and ending with "*/"
 		regex = r"(\/\*([^*]|[\r\n]|(\*+([^*/]|[\r\n])))*\*+\/)"
@@ -86,7 +106,7 @@ def get_skill_descriptions(skills):
 			except yaml.YAMLError, exc:
 				if hasattr(exc, 'problem_mark'):
 					mark = exc.problem_mark
-					print "YAML parse error in file " + filePath + ". Position: (%s:%s)" % (mark.line+1, mark.column+1)
+					print >> sys.stderr, "YAML parse error in file " + filePath + ". Position: (%s:%s)" % (mark.line+1, mark.column+1)
 				result.append((skills[i], None))
 				continue
 			if 'Descr' not in yamlData:
@@ -96,5 +116,7 @@ def get_skill_descriptions(skills):
 		else:
 			# No YAML
 			result.append((skills[i], None))
+
+		# ---- /YAML ----
 	return result
 

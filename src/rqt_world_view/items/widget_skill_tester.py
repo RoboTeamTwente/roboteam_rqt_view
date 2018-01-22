@@ -72,17 +72,27 @@ class WidgetSkillTester(QtWidgets.QFrame):
 
 	# Recreate the blackboard every time the skill/strategy has changed
 	self.skill_entry.currentIndexChanged.connect(self.create_blackboard)
-	skills = []
+
+
+	# ---- Skills ----
+
 	# Read the names of every file in the skills folder
+	skills = []
 	fileNames = os.listdir(SKILLS)
 	# Add those with a .cpp extension and remove that extension in the code
 	for fileName in fileNames:
 		if fileName.endswith(".cpp"):
 			skills.append(fileName[:-4])
 	skills.sort()
+	self.skill_entry.addItems(skills)
 
-	strategies = []
+	# ---- /Skills ----
+
+
+	# ---- Strategies ----
+
 	# Find all strategies in the trees
+	strategies = []
 	for file_name in os.listdir(TREE_DIR):
 		if file_name.endswith(".json"):
 		        with open(TREE_DIR + file_name) as data_file:
@@ -97,23 +107,30 @@ class WidgetSkillTester(QtWidgets.QFrame):
 	                        for tree_data in data['trees']:
 					strategies.append(file_name[:-3] + "/" + tree_data['title'])
 	strategies.sort()
+	self.skill_entry.addItems(strategies)
 	
+	# ---- /Strategies ----
+
+
+	# ---- Tooltips ----
+
 	# Set tooltips for skills
-	self.skill_entry.addItems(skills)
 	descriptions = yaml_helper.get_skill_descriptions(skills)
 	for i in range(len(skills)):
 		description = descriptions[i][1] if descriptions[i][1] is not None else "No description available"
-		print description
 		self.skill_entry.setItemData(i, description, Qt.ToolTipRole)
 	
 	# Strategies don't have descriptions up until now
-	self.skill_entry.addItems(strategies)
 	for i in range(len(strategies)):
 		self.skill_entry.setItemData(i + len(skills), "No description available", Qt.ToolTipRole)
+
+	# ---- /Tooltips ----
+
 
         self.layout().addWidget(self.skill_entry, 2, 1, 1, 2)
 
 	# ---- /Skill entry ----
+
 
         # ---- Process ----
 
