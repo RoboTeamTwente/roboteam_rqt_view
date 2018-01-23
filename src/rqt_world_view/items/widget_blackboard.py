@@ -108,7 +108,9 @@ class WidgetBlackboard(QFrame):
         Changes whether the widgets in the blackboard are editable.
         editable: boolean
         """
-        self.add_item_button.setEnabled(editable)
+
+	# Only set enabled if editable is true and the skill has parameters
+	self.add_item_button.setEnabled(editable and self.parameters is not None)
 
         for item_id, item in self.blackboard_items.iteritems():
             item.set_editable(editable)
