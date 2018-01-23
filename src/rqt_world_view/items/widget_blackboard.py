@@ -376,6 +376,10 @@ class BlackboardItem():
 			value = 0
             elif typestring == "bool":
                 value = self.bool_edit.isChecked()
+		print "typestring"
+		print typestring
+		print "\nvalue"
+		print value
             return typestring + ":" + name + "=" + str(value)
 
 
