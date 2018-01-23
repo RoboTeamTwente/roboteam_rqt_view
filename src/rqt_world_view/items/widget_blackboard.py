@@ -375,11 +375,7 @@ class BlackboardItem():
                 except ValueError, e:
 			value = 0
             elif typestring == "bool":
-                value = self.bool_edit.isChecked()
-		print "typestring"
-		print typestring
-		print "\nvalue"
-		print value
+                value = str(self.bool_edit.isChecked()).lower()
             return typestring + ":" + name + "=" + str(value)
 
 
