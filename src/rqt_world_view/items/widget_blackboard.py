@@ -422,6 +422,12 @@ class BlackboardItem():
 			else:
 				self.dropdown_edit.insertItem(i, str(options[i]))
 				self.dropdown_edit.setItemData(i, "No description available", Qt.ToolTipRole)
+		# Check if a default value is present and set it if it is
+		if 'Default' in parameter:
+			defaultValue = parameter['Default']
+			index = self.dropdown_edit.findText(defaultValue)
+			if index >= 0:
+				self.dropdown_edit.setCurrentIndex(index)
 		self.value_widget.setCurrentIndex(4)
 	else:
 		# Change the visible input and set default value if present
