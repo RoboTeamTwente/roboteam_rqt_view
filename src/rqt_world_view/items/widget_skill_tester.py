@@ -1,7 +1,6 @@
 import subprocess32 as subprocess
 import sys
 import os
-import json
 
 from python_qt_binding import QtWidgets
 from python_qt_binding.QtGui import QRegExpValidator
@@ -35,6 +34,7 @@ class WidgetSkillTester(QtWidgets.QFrame):
 
         self.setSizePolicy(self.sizePolicy().Preferred, self.sizePolicy().Fixed)
 
+
         # ---- Test button ----
 
         self.test_button = QtWidgets.QPushButton("Run test")
@@ -44,10 +44,12 @@ class WidgetSkillTester(QtWidgets.QFrame):
 
         # ---- /Test button ----
 
+
         self.id_label = QtWidgets.QLabel("Id")
         self.layout().addWidget(self.id_label, 1, 0)
         self.skill_label = QtWidgets.QLabel("Skill")
         self.layout().addWidget(self.skill_label, 1, 1, 1, 2)
+
 
         # ---- Id entry ----
 
