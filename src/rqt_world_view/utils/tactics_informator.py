@@ -99,15 +99,11 @@ def get_skill_descriptions(skills):
     	if re.search(regex, data):
             matches = re.findall(regex, data)
 
-            # Most of the time results in two matches. First contains the class name the other parameter info
-            # If it only contains one match we assume it is only the parameter info
-            if len(matches) == 1:
-                match = matches[0][0]
-            else:
-                match = matches[1][0]
+            # This results in two matches. First contains the class name the other parameter info
+            match = matches[1][0]
 
             # Remove comment tokens
-    		match = match.replace("*", "").replace("/", "")
+            match = match.replace("*", "").replace("/", "")
 
             # Description when no description is available
             defaultDescription = "No description available"
