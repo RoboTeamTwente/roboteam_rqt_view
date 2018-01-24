@@ -2,7 +2,7 @@ from python_qt_binding.QtWidgets import QFrame, QLabel, QGridLayout, QPushButton
 from python_qt_binding.QtGui import QDoubleValidator, QRegExpValidator
 from python_qt_binding.QtCore import QRegExp, Qt
 from rqt_world_view.items.non_scrollable_combo_box import NonScrollableQComboBox
-from rqt_world_view.utils import yaml_helper
+from rqt_world_view.utils import tactics_informator
 
 import unicodedata
 
@@ -15,7 +15,8 @@ class WidgetBlackboard(QFrame):
 
         super(WidgetBlackboard, self).__init__()
 
-	self.parameters = yaml_helper.get_parameters(skill)
+	# Get all parameters of the skill
+	self.parameters = tactics_informator.get_parameters(skill)
 
         self.setLayout(QGridLayout())
 

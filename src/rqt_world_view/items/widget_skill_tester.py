@@ -1,7 +1,6 @@
 import subprocess32 as subprocess
 import sys
 import os
-import rospkg
 import json
 
 from python_qt_binding import QtWidgets
@@ -11,7 +10,6 @@ from python_qt_binding.QtCore import QRegExp, pyqtSignal, Qt
 from widget_blackboard import WidgetBlackboard
 from rqt_world_view.utils import utils
 from rqt_world_view.items.non_scrollable_combo_box import NonScrollableQComboBox
-from rqt_world_view.utils import yaml_helper
 
 from roboteam_msgs import msg
 
@@ -20,9 +18,6 @@ ROSRUN = "rosrun"
 TESTX_PACKAGE = "roboteam_tactics"
 TESTX_COMMAND = "TestX"
 
-SKILLS = rospkg.RosPack().get_path('roboteam_tactics') + "/src/skills/"
-TREE_DIR = rospkg.RosPack().get_path('roboteam_tactics') + "/src/trees/json/"
-PROJECTS_DIR = rospkg.RosPack().get_path('roboteam_tactics') + "/src/trees/projects/"
 
 class WidgetSkillTester(QtWidgets.QFrame):
 
@@ -30,7 +25,7 @@ class WidgetSkillTester(QtWidgets.QFrame):
     test_stopped_signal = pyqtSignal()
 
 
-    def __init__(self, strategy_ignore_topic):
+    def __init__(self, strategy_ignore_topic, information):
         """strategy_ignore_topic: rospy.Publisher -- Topic to notify strategy nodes on that they should ignore a robot."""
         super(WidgetSkillTester, self).__init__()
 
@@ -66,70 +61,43 @@ class WidgetSkillTester(QtWidgets.QFrame):
         # ---- /Id entry ----
 
 
-	# ---- Skill entry ----
+	    # ---- Skill entry ----
 
-	self.skill_entry = NonScrollableQComboBox()
+        self.skill_entry = NonScrollableQComboBox()
 
-	# Recreate the blackboard every time the skill/strategy has changed
-	self.skill_entry.currentIndexChanged.connect(self.create_blackboard)
+        # Recreate the blackboard every time the skill/strategy has changed
+        self.skill_entry.currentIndexChanged.connect(self.create_blackboard)
 
+        # Define functions to quickly get a first or second element of a tuple
+        def first(x):  return x[0]
+        def second(x): return x[1]
 
-	# ---- Skills ----
+        # Use functions defined above in combination with map to get a list of all first or second elements of the tuples
 
-	# Read the names of every file in the skills folder
-	skills = []
-	fileNames = os.listdir(SKILLS)
-	# Add those with a .cpp extension and remove that extension in the code
-	for fileName in fileNames:
-		if fileName.endswith(".cpp"):
-			skills.append(fileName[:-4])
-	skills.sort()
-	self.skill_entry.addItems(skills)
+        # Get skill names
+        skills = map(first, information[0])
+        # Get the skill descriptions
+        descriptions = map(second, information[0])
 
-	# ---- /Skills ----
+        # Get strategy names
+        strategies = map(first, information[1])
+        # Get the strategy descriptions
+        strategyDescriptions = map(second, information[1])
 
+        # Merge descriptions
+        descriptions.extend(strategyDescriptions)
 
-	# ---- Strategies ----
+        # Add names to the dropdown
+        self.skill_entry.addItems(skills)
+        self.skill_entry.addItems(strategies)
 
-	# Find all strategies in the trees
-	strategies = []
-	for file_name in os.listdir(TREE_DIR):
-		if file_name.endswith(".json"):
-		        with open(TREE_DIR + file_name) as data_file:
-				data = json.load(data_file)
-			strategies.append(file_name[:-5])
-
-        for file_name in os.listdir(PROJECTS_DIR):
-		if file_name.endswith(".b3"):
-			with open(PROJECTS_DIR + file_name) as data_file:
-				data = json.load(data_file)['data']
-			if 'trees' in data:
-	                        for tree_data in data['trees']:
-					strategies.append(file_name[:-3] + "/" + tree_data['title'])
-	strategies.sort()
-	self.skill_entry.addItems(strategies)
-	
-	# ---- /Strategies ----
-
-
-	# ---- Tooltips ----
-
-	# Set tooltips for skills
-	descriptions = yaml_helper.get_skill_descriptions(skills)
-	for i in range(len(skills)):
-		description = descriptions[i][1] if descriptions[i][1] is not None else "No description available"
-		self.skill_entry.setItemData(i, description, Qt.ToolTipRole)
-	
-	# Strategies don't have descriptions up until now
-	for i in range(len(strategies)):
-		self.skill_entry.setItemData(i + len(skills), "No description available", Qt.ToolTipRole)
-
-	# ---- /Tooltips ----
-
+        # Set tooltips
+        for i in range(len(skills)+len(strategies)):
+            self.skill_entry.setItemData(i, descriptions[i], Qt.ToolTipRole)
 
         self.layout().addWidget(self.skill_entry, 2, 1, 1, 2)
 
-	# ---- /Skill entry ----
+        # ---- /Skill entry ----
 
 
         # ---- Process ----
@@ -144,11 +112,12 @@ class WidgetSkillTester(QtWidgets.QFrame):
 
 
     def create_blackboard(self):
-	# Remove the currect blackboard if it exists
-	if hasattr(self, 'blackboard'):
-        	self.blackboard.deleteLater()
-		self.blackboard = None
-	# Create a new blackboard and pass along the selected skill/strategy
+        # Remove the currect blackboard if it exists
+        if hasattr(self, 'blackboard'):
+            self.blackboard.deleteLater()
+            self.blackboard = None
+
+        # Create a new blackboard and pass along the selected skill/strategy
         self.blackboard = WidgetBlackboard(self.skill_entry.currentText())
         self.blackboard.layout().setContentsMargins(2, 2, 2, 5)
         self.blackboard.setFrameStyle(QtWidgets.QFrame.Panel | QtWidgets.QFrame.Sunken)
@@ -169,7 +138,6 @@ class WidgetSkillTester(QtWidgets.QFrame):
         state = dict()
         state["id"] = self.id_entry.text()
         state["skill"] = str(self.skill_entry.currentText())
-
         state["blackboard"] = self.blackboard.get_state()
 
         return state

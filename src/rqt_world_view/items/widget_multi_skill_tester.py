@@ -3,6 +3,7 @@ from python_qt_binding import QtWidgets
 from python_qt_binding.QtCore import Qt
 
 from widget_skill_tester import WidgetSkillTester
+from rqt_world_view.utils import tactics_informator
 
 
 class WidgetMultiSkillTester(QtWidgets.QFrame):
@@ -65,6 +66,10 @@ class WidgetMultiSkillTester(QtWidgets.QFrame):
 
         # ---- /Scroll area ----
 
+        # Get the names of skills and strategies and their descriptions
+        self.information = tactics_informator.get_information()
+
+
     def remove_tester(self, tester_id):
         """Gets called by a tester if it wants to be removed."""
         self.testers[tester_id].deleteLater()
@@ -83,13 +88,14 @@ class WidgetMultiSkillTester(QtWidgets.QFrame):
             tester = self.slot_add_tester()
             tester.set_state(tester_state)
 
+
 # ------------------------------------------------------------------------------
 # ---------- Button slots ------------------------------------------------------
 # ------------------------------------------------------------------------------
 
     def slot_add_tester(self):
         """Gets called when the "Add tester" button is clicked."""
-        tester = WidgetSkillTester(self.strategy_ignore_topic)
+        tester = WidgetSkillTester(self.strategy_ignore_topic, self.information)
 
         tester.setFrameStyle(QtWidgets.QFrame.Panel)
         tester.add_remove_button(self.remove_tester, self.next_tester_id)
