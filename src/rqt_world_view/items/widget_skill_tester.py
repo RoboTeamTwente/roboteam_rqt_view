@@ -64,7 +64,7 @@ class WidgetSkillTester(QtWidgets.QFrame):
 
 
 	    # ---- Skill entry ----
-
+	    
         self.skill_entry = NonScrollableQComboBox()
 
         # Recreate the blackboard every time the skill/strategy has changed

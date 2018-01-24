@@ -12,11 +12,10 @@ from roboteam_msgs import msg
 class WidgetBlackboard(QFrame):
 
     def __init__(self, skill):
-
         super(WidgetBlackboard, self).__init__()
 
-	# Get all parameters of the skill
-	self.parameters = tactics_informator.get_parameters(skill)
+        # Get all parameters of the skill
+        self.parameters = tactics_informator.get_parameters(skill)
 
         self.setLayout(QGridLayout())
 
@@ -27,7 +26,7 @@ class WidgetBlackboard(QFrame):
         # ---- Add item button ----
         self.add_item_button = QPushButton("Add value")
         self.add_item_button.setFocusPolicy(Qt.ClickFocus)
-	self.add_item_button.setEnabled(self.parameters is not None)
+        self.add_item_button.setEnabled(self.parameters is not None)
         self.layout().addWidget(self.add_item_button, 0, 1, 1, 3)
         self.add_item_button.clicked.connect(self.slot_add_item)
         # ---- /Add item button ----
@@ -110,8 +109,8 @@ class WidgetBlackboard(QFrame):
         editable: boolean
         """
 
-	# Only set enabled if editable is true and the skill has parameters
-	self.add_item_button.setEnabled(editable and self.parameters is not None)
+        # Only set enabled if editable is true and the skill has parameters
+        self.add_item_button.setEnabled(editable and self.parameters is not None)
 
         for item_id, item in self.blackboard_items.iteritems():
             item.set_editable(editable)
@@ -161,39 +160,40 @@ class BlackboardItem():
 
         self.id = item_id
         self.remove_callback = remove_callback
-	self.parameters = parameters
+        self.parameters = parameters
 
 
-	# ---- Param widget ----
+        # ---- Param widget ----
 
         self.param_widget = NonScrollableQComboBox()
 
-	if self.parameters is None:
-		self.param_widget.insertItem(0, "No parameters")
-		self.param_widget.setItemData(0, "This skill has no parameters", Qt.ToolTipRole)
-	else:
-		sortedParameters = sorted(parameters, key=lambda s: s.lower())
+        if self.parameters is None:
+            self.param_widget.insertItem(0, "No parameters")
+            self.param_widget.setItemData(0, "This skill has no parameters", Qt.ToolTipRole)
+        else:
+            sortedParameters = sorted(parameters, key=lambda s: s.lower())
 		
-		# Add tooltip to the parameters in the dropdown
-		for i in range(len(parameters.keys())):
-			parameter = sortedParameters[i]
-			self.param_widget.insertItem(i, parameter)
-			# Construct tooltip
-			if 'Descr' in parameters[parameter] or 'Used when' in parameters[parameter] or 'Note' in parameters[parameter]:
-				if 'Descr' in parameters[parameter]:
-					description = parameters[parameter]['Descr'] + "\n"
-				if 'Used when' in parameters[parameter]:
-					description = description + "Used when: " + parameters[parameter]['Used when'] + "\n"
-				if 'Note' in parameters[parameter]:
-					description = description + "Note: " + parameters[parameter]['Note']
-				else:
-					# Remove trailing newline
-					description = description[:-1]
-			else:
-				description = 'No description available'
-			self.param_widget.setItemData(i, description, Qt.ToolTipRole)
+        # Add tooltip to the parameters in the dropdown
+        for i in range(len(parameters.keys())):
+            parameter = sortedParameters[i]
+            self.param_widget.insertItem(i, parameter)
+            # Construct tooltip
+            if 'Descr' in parameters[parameter] or 'Used when' in parameters[parameter] or 'Note' in parameters[parameter]:
+                if 'Descr' in parameters[parameter]:
+                    description = parameters[parameter]['Descr'] + "\n"
+                if 'Used when' in parameters[parameter]:
+                    description = description + "Used when: " + parameters[parameter]['Used when'] + "\n"
+                if 'Note' in parameters[parameter]:
+                    description = description + "Note: " + parameters[parameter]['Note']
+                else:
+                    # Remove trailing newline
+                    description = description[:-1]
+            else:
+                description = 'No description available'
 
-	# ---- /Param widget ----
+            self.param_widget.setItemData(i, description, Qt.ToolTipRole)
+
+        # ---- /Param widget ----
 
 
         # ---- Value widget ----
@@ -222,12 +222,12 @@ class BlackboardItem():
         self.bool_edit = QCheckBox()
         self.value_widget.addWidget(self.bool_edit)
 
-	# Dropdown input. Used when "Can be" is specified in YAML
-	self.dropdown_edit = NonScrollableQComboBox()
-	self.value_widget.addWidget(self.dropdown_edit)
+        # Dropdown input. Used when "Can be" is specified in YAML
+        self.dropdown_edit = NonScrollableQComboBox()
+        self.value_widget.addWidget(self.dropdown_edit)
 
-	# Make value widget show correct input
-	self.slot_type_selection_changed(self.param_widget.currentIndex())
+        # Make value widget show correct input
+        self.slot_type_selection_changed(self.param_widget.currentIndex())
 
         # ---- /Value widget ----
 
@@ -238,19 +238,19 @@ class BlackboardItem():
 
         # ---- Connect signals ----
         self.remove_widget.clicked.connect(self.slot_remove_widget_pressed)
-	self.param_widget.currentIndexChanged.connect(self.slot_type_selection_changed)
+        self.param_widget.currentIndexChanged.connect(self.slot_type_selection_changed)
 
 
     def get_state(self):
-	state = {}
+        state = {}
         state["param"] = self.param_widget.currentText()
 
-	typestring = self.parameters[self.param_widget.currentText()]['Type']
+        typestring = self.parameters[self.param_widget.currentText()]['Type']
         state["typestring"] = typestring
 
-	# If the dropdown is used, read its text instead of the field of the corresponding type
-	using_dropdown = self.value_widget.currentIndex() == 4
-	if using_dropdown:
+        # If the dropdown is used, read its text instead of the field of the corresponding type
+        using_dropdown = self.value_widget.currentIndex() == 4
+        if using_dropdown:
             state["value"] = self.dropdown_edit.currentText()
         elif typestring == "String":
             state["value"] = self.string_edit.text()
@@ -266,24 +266,24 @@ class BlackboardItem():
     def set_state(self, state):
         typestring = state["typestring"]
 
-	index = self.param_widget.findText(state["param"])
+        index = self.param_widget.findText(state["param"])
         self.param_widget.setCurrentIndex(index if index >= 0 else 0)
 	
-	# If the dropdown is used, write the value to there instead of to the field of the corresponding type
-	using_dropdown = self.value_widget.currentIndex() == 4
-	if using_dropdown:
+	    # If the dropdown is used, write the value to there instead of to the field of the corresponding type
+        using_dropdown = self.value_widget.currentIndex() == 4
+        if using_dropdown:
             index = self.dropdown_edit.findText(state["value"])
             if index >= 0:
                 self.dropdown_edit.setCurrentIndex(index)
-        elif typestring == "String":
-            self.string_edit.setText(state["value"])
-        elif typestring == "Int":
-            self.int_edit.setText(state["value"])
-        elif typestring == "Double":
-            self.double_edit.setText(state["value"])
-        elif typestring == "Bool":
-            checked = bool(state["value"])
-            self.bool_edit.setChecked(checked)
+            elif typestring == "String":
+                self.string_edit.setText(state["value"])
+            elif typestring == "Int":
+                self.int_edit.setText(state["value"])
+            elif typestring == "Double":
+                self.double_edit.setText(state["value"])
+            elif typestring == "Bool":
+                checked = bool(state["value"])
+                self.bool_edit.setChecked(checked)
 
 
     def get_entry_message(self):
@@ -294,7 +294,7 @@ class BlackboardItem():
         msg.Float64Entry
         msg.BoolEntry
         """
-	typestring = self.parameters[self.param_widget.currentText()]['Type']
+        typestring = self.parameters[self.param_widget.currentText()]['Type']
 
         if typestring == "String":
             item = msg.StringEntry()
@@ -349,32 +349,32 @@ class BlackboardItem():
             # If there is no name, return an empty string.
             if name == "":
                 return ""
-	    # Check if the dropdown is used. We assume that this can be the case for every type except booleans
+	        # Check if the dropdown is used. We assume that this can be the case for every type except booleans
             using_dropdown = self.value_widget.currentIndex() == 4
             value = ""
             if typestring == "string":
-		if using_dropdown:
-			value = self.dropdown_edit.currentText()
+                if using_dropdown:
+                    value = self.dropdown_edit.currentText()
                 else:
-			value = self.string_edit.text()
+                    value = self.string_edit.text()
                 # Convert the unicode string coming from the text box into a python one.
-		value = unicodedata.normalize('NFKD', value).encode('ascii','ignore')
+                value = unicodedata.normalize('NFKD', value).encode('ascii','ignore')
             elif typestring == "int":
                 try:
-			if using_dropdown:
-				value = int(self.dropdown_edit.currentText())
-                    	else:
-				value = int(self.int_edit.text())
+                    if using_dropdown:
+                        value = int(self.dropdown_edit.currentText())
+                    else:
+                        value = int(self.int_edit.text())
                 except ValueError, e:
                     value = 0
             elif typestring == "double":
                 try:
-			if using_dropdown:
-				value = float(self.dropdown_edit.currentText())
-			else:
-				value = float(self.double_edit.text())
+                    if using_dropdown:
+                        value = float(self.dropdown_edit.currentText())
+                    else:
+                        value = float(self.double_edit.text())
                 except ValueError, e:
-			value = 0
+                    value = 0
             elif typestring == "bool":
                 value = str(self.bool_edit.isChecked()).lower()
             return typestring + ":" + name + "=" + str(value)
@@ -386,7 +386,7 @@ class BlackboardItem():
         editable: boolean
         """
         self.param_widget.setEnabled(editable)
-	self.dropdown_edit.setEnabled(editable)
+        self.dropdown_edit.setEnabled(editable)
         self.string_edit.setEnabled(editable)
         self.double_edit.setEnabled(editable)
         self.int_edit.setEnabled(editable)
@@ -406,48 +406,48 @@ class BlackboardItem():
         self.double_edit.clear()
         self.int_edit.clear()
         self.bool_edit.setChecked(False)
-	self.dropdown_edit.clear()
+        self.dropdown_edit.clear()
 
-	parameter = self.parameters[self.param_widget.currentText()]
+        parameter = self.parameters[self.param_widget.currentText()]
 
-	# If 'Can be' has been specified in YAML change the inputfield to a dropdown with all possible options
-	if 'Can be' in parameter:
-		options = parameter['Can be']
-		for i in range(len(options)):
-			# Check if options contains dicts or values. If it contains dicts it means that a description is included
-			if isinstance(options[0], dict):
-				key = options[i].keys()[0]
-				self.dropdown_edit.insertItem(i, str(key))
-				description = options[i][key]
-				self.dropdown_edit.setItemData(i, description, Qt.ToolTipRole)
-			else:
-				self.dropdown_edit.insertItem(i, str(options[i]))
-				self.dropdown_edit.setItemData(i, "No description available", Qt.ToolTipRole)
-		# Check if a default value is present and set it if it is
-		if 'Default' in parameter:
-			defaultValue = parameter['Default']
-			index = self.dropdown_edit.findText(defaultValue)
-			if index >= 0:
-				self.dropdown_edit.setCurrentIndex(index)
-		self.value_widget.setCurrentIndex(4)
-	else:
-		# Change the visible input and set default value if present
-		requiredType = parameter['Type']
-		if 'Default' in parameter:
-			defaultValue = parameter['Default']
-		else:
-			defaultValue = ""
-		if requiredType == 'String':
-			self.value_widget.setCurrentIndex(0)
-			self.string_edit.setText(defaultValue)
-		elif requiredType == 'Double':
-			self.value_widget.setCurrentIndex(1)
-			self.double_edit.setText(str(defaultValue))
-		elif requiredType == 'Int':
-			self.value_widget.setCurrentIndex(2)
-			self.int_edit.setText(str(defaultValue))
-		elif requiredType == 'Bool':
-			self.value_widget.setCurrentIndex(3)
-			self.bool_edit.setChecked(defaultValue != "" and defaultValue)
-		else:
-			self.value_widget.setCurrentIndex(0)
+        # If 'Can be' has been specified in YAML change the inputfield to a dropdown with all possible options
+        if 'Can be' in parameter:
+            options = parameter['Can be']
+            for i in range(len(options)):
+                # Check if options contains dicts or values. If it contains dicts it means that a description is included
+                if isinstance(options[0], dict):
+                    key = options[i].keys()[0]
+                    self.dropdown_edit.insertItem(i, str(key))
+                    description = options[i][key]
+                    self.dropdown_edit.setItemData(i, description, Qt.ToolTipRole)
+                else:
+                    self.dropdown_edit.insertItem(i, str(options[i]))
+                    self.dropdown_edit.setItemData(i, "No description available", Qt.ToolTipRole)
+            # Check if a default value is present and set it if it is
+            if 'Default' in parameter:
+                defaultValue = parameter['Default']
+                index = self.dropdown_edit.findText(defaultValue)
+                if index >= 0:
+                    self.dropdown_edit.setCurrentIndex(index)
+            self.value_widget.setCurrentIndex(4)
+        else:
+            # Change the visible input and set default value if present
+            requiredType = parameter['Type']
+            if 'Default' in parameter:
+                defaultValue = parameter['Default']
+            else:
+                defaultValue = ""
+            if requiredType == 'String':
+                self.value_widget.setCurrentIndex(0)
+                self.string_edit.setText(defaultValue)
+            elif requiredType == 'Double':
+                self.value_widget.setCurrentIndex(1)
+                self.double_edit.setText(str(defaultValue))
+            elif requiredType == 'Int':
+                self.value_widget.setCurrentIndex(2)
+                self.int_edit.setText(str(defaultValue))
+            elif requiredType == 'Bool':
+                self.value_widget.setCurrentIndex(3)
+                self.bool_edit.setChecked(defaultValue != "" and defaultValue)
+            else:
+                self.value_widget.setCurrentIndex(0)
