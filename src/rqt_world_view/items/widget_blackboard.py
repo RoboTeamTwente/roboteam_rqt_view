@@ -26,7 +26,6 @@ class WidgetBlackboard(QFrame):
         # ---- Add item button ----
         self.add_item_button = QPushButton("Add value")
         self.add_item_button.setFocusPolicy(Qt.ClickFocus)
-        self.add_item_button.setEnabled(self.parameters is not None)
         self.layout().addWidget(self.add_item_button, 0, 1, 1, 3)
         self.add_item_button.clicked.connect(self.slot_add_item)
         # ---- /Add item button ----
@@ -109,8 +108,7 @@ class WidgetBlackboard(QFrame):
         editable: boolean
         """
 
-        # Only set enabled if editable is true and the skill has parameters
-        self.add_item_button.setEnabled(editable and self.parameters is not None)
+        self.add_item_button.setEnabled(editable)
 
         for item_id, item in self.blackboard_items.iteritems():
             item.set_editable(editable)
@@ -167,31 +165,33 @@ class BlackboardItem():
 
         self.param_widget = NonScrollableQComboBox()
 
-        if self.parameters is None:
-            self.param_widget.insertItem(0, "No parameters")
-            self.param_widget.setItemData(0, "This skill has no parameters", Qt.ToolTipRole)
-        else:
+        if parameters != None:
             sortedParameters = sorted(parameters, key=lambda s: s.lower())
-		
-        # Add tooltip to the parameters in the dropdown
-        for i in range(len(parameters.keys())):
-            parameter = sortedParameters[i]
-            self.param_widget.insertItem(i, parameter)
-            # Construct tooltip
-            if 'Descr' in parameters[parameter] or 'Used when' in parameters[parameter] or 'Note' in parameters[parameter]:
-                if 'Descr' in parameters[parameter]:
-                    description = parameters[parameter]['Descr'] + "\n"
-                if 'Used when' in parameters[parameter]:
-                    description = description + "Used when: " + parameters[parameter]['Used when'] + "\n"
-                if 'Note' in parameters[parameter]:
-                    description = description + "Note: " + parameters[parameter]['Note']
-                else:
-                    # Remove trailing newline
-                    description = description[:-1]
-            else:
-                description = 'No description available'
 
-            self.param_widget.setItemData(i, description, Qt.ToolTipRole)
+            # Add tooltip to the parameters in the dropdown
+            for i in range(len(parameters.keys())):
+                parameter = sortedParameters[i]
+                self.param_widget.insertItem(i, parameter)
+                # Construct tooltip
+                if 'Descr' in parameters[parameter] or 'Used when' in parameters[parameter] or 'Note' in parameters[parameter]:
+                    if 'Descr' in parameters[parameter]:
+                        description = parameters[parameter]['Descr'] + "\n"
+                    if 'Used when' in parameters[parameter]:
+                        description = description + "Used when: " + parameters[parameter]['Used when'] + "\n"
+                    if 'Note' in parameters[parameter]:
+                        description = description + "Note: " + parameters[parameter]['Note']
+                    else:
+                        # Remove trailing newline
+                        description = description[:-1]
+                else:
+                    description = 'No description available'
+                self.param_widget.setItemData(i, description, Qt.ToolTipRole)
+
+            self.param_widget.insertItem(len(parameters.keys()), "Other")
+            self.param_widget.setItemData(len(parameters.keys()), "Used to send any parameter. Use NAME:VALUE. Type is derived. Bool: True or False, Int: integer value, Double: two integer values seperated by a dot (.), String: anything else", Qt.ToolTipRole)
+        else:
+            self.param_widget.insertItem(0, "Other")
+            self.param_widget.setItemData(0, "Used to send any parameter. Use NAME:VALUE. Type is derived. Bool: True of Ralse, Int: integer value, Double: two integer values seperated by a dot (.), String: anything else", Qt.ToolTipRole)
 
         # ---- /Param widget ----
 
@@ -225,6 +225,10 @@ class BlackboardItem():
         # Dropdown input. Used when "Can be" is specified in YAML
         self.dropdown_edit = NonScrollableQComboBox()
         self.value_widget.addWidget(self.dropdown_edit)
+        
+        # Other input. Used to input anything. Format as NAME:VALUE. Type is derived automatically
+        self.other_edit = QLineEdit()
+        self.value_widget.addWidget(self.other_edit)
 
         # Make value widget show correct input
         self.slot_type_selection_changed(self.param_widget.currentIndex())
@@ -243,9 +247,15 @@ class BlackboardItem():
 
     def get_state(self):
         state = {}
-        state["param"] = self.param_widget.currentText()
-
-        typestring = self.parameters[self.param_widget.currentText()]['Type']
+        param = self.param_widget.currentText()
+        state["param"] = param
+        
+        # If 'Other' is chosen, the user can supply anything. The type of the value is derived in get_entry_message()
+        if param == "Other":
+            typestring = "undetermined"
+        else:
+            typestring = self.parameters[param]['Type']
+            
         state["typestring"] = typestring
 
         # If the dropdown is used, read its text instead of the field of the corresponding type
@@ -260,6 +270,8 @@ class BlackboardItem():
             state["value"] = self.double_edit.text()
         elif typestring == "Bool":
             state["value"] = self.bool_edit.isChecked()
+        elif typestring == "undetermined":
+            state["value"] = self.other_edit.text()
         return state
 
 
@@ -275,15 +287,17 @@ class BlackboardItem():
             index = self.dropdown_edit.findText(state["value"])
             if index >= 0:
                 self.dropdown_edit.setCurrentIndex(index)
-            elif typestring == "String":
-                self.string_edit.setText(state["value"])
-            elif typestring == "Int":
-                self.int_edit.setText(state["value"])
-            elif typestring == "Double":
-                self.double_edit.setText(state["value"])
-            elif typestring == "Bool":
-                checked = bool(state["value"])
-                self.bool_edit.setChecked(checked)
+        elif typestring == "String":
+            self.string_edit.setText(state["value"])
+        elif typestring == "Int":
+            self.int_edit.setText(state["value"])
+        elif typestring == "Double":
+            self.double_edit.setText(state["value"])
+        elif typestring == "Bool":
+            checked = bool(state["value"])
+            self.bool_edit.setChecked(checked)
+        elif typestring == "undetermined":
+            self.other_edit.setText(state["value"])
 
 
     def get_entry_message(self):
@@ -294,7 +308,29 @@ class BlackboardItem():
         msg.Float64Entry
         msg.BoolEntry
         """
-        typestring = self.parameters[self.param_widget.currentText()]['Type']
+        param = self.param_widget.currentText()
+        # Special case if parameter is Other
+        if param == 'Other':
+            param = self.other_edit.text()
+            info = self.get_info_from_other(param)
+            name = info[0]
+            value = info[1]
+            typestring = info[2]
+            if typestring == "String":
+                item = msg.StringEntry()
+            elif typestring == "Int":
+                item = msg.IntEntry()
+            elif typestring == "Double":
+                item = msg.DoubleEntry()
+            elif typestring == "Bool":
+                item = msg.BoolEntry()
+            else:
+                item = msg.StringEntry()
+            item.name = name
+            item.value = value
+            return item
+        else:
+            typestring = self.parameters[param]['Type']
 
         if typestring == "String":
             item = msg.StringEntry()
@@ -341,7 +377,19 @@ class BlackboardItem():
             "Bool": "bool"
         }
 
-        typestring = type_mapping.get(self.parameters[self.param_widget.currentText()]['Type'], "")
+        param = self.param_widget.currentText()
+        if param == "Other":
+            param = self.other_edit.text()
+            info = self.get_info_from_other(param)
+            if info == None:
+                return ""
+            name = info[0]
+            value = info[1]
+            typestring = info[2]
+            typestring = type_mapping.get(typestring)
+            return typestring + ":" + name + "=" + str(value).lower()
+        else:
+            typestring = type_mapping.get(self.parameters[self.param_widget.currentText()]['Type'], "")
 
         if typestring != "":
             name = unicodedata.normalize('NFKD', self.param_widget.currentText()).encode('ascii','ignore')
@@ -380,6 +428,35 @@ class BlackboardItem():
             return typestring + ":" + name + "=" + str(value)
 
 
+    def get_info_from_other(self, param):
+        """Returns the name, value and type of the Other parameter"""
+        
+        if len(param.split(":")) != 2:
+            return
+        name = param.split(":")[0]
+        valueText = param.split(":")[1]
+        # Booleans
+        if valueText == "True" or valueText == "False" or valueText == "true" or valueText == "false":
+            typeText = "Bool"
+            value = valueText == "True" or valueText == "true"
+        else:
+        # Hacky but easy solution. Ask forgiveness, not permission
+            # Ints
+            try:
+                value = int(valueText)
+                typeText = "Int"
+            except ValueError, e:
+                # Doubles
+                try:
+                    value = float(valueText)
+                    typeText = "Double"
+                except ValueError, e:
+                    # Strings
+                    value = valueText
+                    typeText = "String"
+        return [name, value, typeText]
+        
+
     def set_editable(self, editable):
         """
         Changes whether the entries options are editable.
@@ -391,6 +468,7 @@ class BlackboardItem():
         self.double_edit.setEnabled(editable)
         self.int_edit.setEnabled(editable)
         self.bool_edit.setEnabled(editable)
+        self.other_edit.setEnabled(editable)
         self.remove_widget.setEnabled(editable)
 
 
@@ -407,8 +485,15 @@ class BlackboardItem():
         self.int_edit.clear()
         self.bool_edit.setChecked(False)
         self.dropdown_edit.clear()
+        self.other_edit.clear()
 
-        parameter = self.parameters[self.param_widget.currentText()]
+        selectedParam = self.param_widget.currentText()
+        # If 'Other' has been selected, set input to other_edit and return
+        if selectedParam == "Other":
+            self.value_widget.setCurrentIndex(5)
+            return
+
+        parameter = self.parameters[selectedParam]
 
         # If 'Can be' has been specified in YAML change the inputfield to a dropdown with all possible options
         if 'Can be' in parameter:

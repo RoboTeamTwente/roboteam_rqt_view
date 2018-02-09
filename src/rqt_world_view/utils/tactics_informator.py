@@ -49,6 +49,9 @@ def get_skill_descriptions(skills):
     # Result will be a list of (skill, description) tuples
     result = []
     for i in range(len(skills)):
+        # Ignore the unity.h file, as it is not a skill
+        if skills[i] == 'unity':
+            continue
         # Construct file path
         filePath = SKILL_HEADERS + skills[i] + '.h'
         # Read the contents of the file
@@ -162,14 +165,15 @@ def get_yaml_from_file(filePath, contents):
         # Remove comment tokens
         yamlText = match.replace("*", "").replace("/", "")
     else:
-        print_feedback(filePath, "No YAML found")
+        print_feedback(filePath, "No YAML found.")
         return None
         
     return yamlText
 
 
 def yaml_validator(filePath, yamlText):
-    """Validates YAML and returns object constructed out of the YAML data or None if the data is incorrect."""
+    """Validates YAML and returns object constructed out of the YAML data or None if the data is incorrect.
+       Validates specifically for how we want skill header files to be formatted."""
     
     try:
         yamlData = yaml.load(yamlText)
@@ -185,28 +189,43 @@ def yaml_validator(filePath, yamlText):
     if 'Descr' not in yamlData:
         print_feedback(filePath, "No description specified.")
         return None
+    elif yamlData['Descr'] is None:
+        print_feedback(filePath, "Description is empty.")
 
     if 'Params' in yamlData:
-        # If yamlData['Params'] returns a dict instead of a list the YAML was incorrectly formatted. Parameters should be listed using a '-'
+        # If yamlData['Params'] returns a dict instead of a list the YAML was incorrectly formatted
+        # Parameters should be listed using a '-'
         if isinstance(yamlData['Params'], dict):
-            print_feedback(filePath, "Parameters incorrectly formatted. Should be listed using \'-\'")
+            print_feedback(filePath, "Parameters incorrectly formatted. Should be listed using \'-\'.")
             return None
             
-        # Check if every parameter has a Type
         for param in yamlData['Params']:
             arguments = param.get(param.keys()[0])
+            parameterName = param.keys()[0]
+            # Check if the parameter has a valid Type
             if 'Type' not in arguments:
-                print_feedback(filePath, "A parameter is missing its Type")
+                print_feedback(filePath, parameterName + " is missing its Type.")
                 return None
             t = arguments['Type']
             if t != "String" and t != "Double" and t != "Int" and t != "Bool":
-                print_feedback(filePath, "A parameter has an invalid Type")
+                print_feedback(filePath, parameterName + " has an invalid Type.")
                 return None
-
+            
+            # Check against an empty description
+            if 'Descr' in arguments and arguments['Descr'] is None:
+                print_feedback(filePath, parameterName + " has an empty description.")
+                return None
+            
+            # Check against an empty default value
+            if 'Default' in arguments and arguments['Default'] is None:
+                print_feedback(filePath, parameterName + " has an empty default value.")
+                return None
+                
             if 'Can be' in arguments:
-                # If yamlData['Params']['Can be'] returns a dict instead of a list the YAML was incorrectly formatted. Options should be listed using a '-'
+                # If yamlData['Params']['Can be'] returns a dict instead of a list the YAML was incorrectly formatted.
+                # Options should be listed using a '-'
                 if isinstance(arguments['Can be'], dict):
-                    print_feedback(filePath, "Options in \'Can be\' incorrectly formatted. Options should be listed using \'-\'")
+                    print_feedback(filePath, "Options in \'Can be\' in parameter " + parameterName + " incorrectly formatted. Options should be listed using \'-\'.")
                     return None
     return yamlData
 
