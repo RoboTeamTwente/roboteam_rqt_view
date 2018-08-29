@@ -7,7 +7,6 @@ import json
 
 SKILL_HEADERS = rospkg.RosPack().get_path('roboteam_tactics') + "/include/roboteam_tactics/skills/"
 SKILLS = rospkg.RosPack().get_path('roboteam_tactics') + "/src/skills/"
-TREE_DIR = rospkg.RosPack().get_path('roboteam_tactics') + "/src/trees/json/"
 PROJECTS_DIR = rospkg.RosPack().get_path('roboteam_tactics') + "/src/trees/projects/"
 
 # Parameter that indicates whether functions of this class should give feedback on improper formatted YAML
@@ -112,9 +111,6 @@ def get_information():
 
     # Find all strategies in the trees
     strategies = []
-    for file_name in os.listdir(TREE_DIR):
-        if file_name.endswith(".json"):
-            strategies.append(file_name[:-5])
     for file_name in os.listdir(PROJECTS_DIR):
         if file_name.endswith(".b3"):
             with open(PROJECTS_DIR + file_name) as data_file:
