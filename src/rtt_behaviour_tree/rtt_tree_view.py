@@ -13,7 +13,6 @@ from widgets import tree_view, tree_list_widget
 from items import tree_graphics_item
 
 
-TREE_DIR = rospkg.RosPack().get_path('roboteam_tactics') + "/src/trees/json/"
 PROJECTS_DIR = rospkg.RosPack().get_path('roboteam_tactics') + "/src/trees/projects/"
 
 
@@ -77,7 +76,7 @@ class TreeViewPlugin(Plugin):
         # ---- /Connect signals ----
 
 
-        self._trees.load_trees(TREE_DIR, PROJECTS_DIR)
+        self._trees.load_trees(PROJECTS_DIR)
 
         # Sort ascending.
         self.list_widget.sortItems()

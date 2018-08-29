@@ -14,8 +14,6 @@ from tree import tree_list, behaviour_tree, debug_list
 from widgets import tree_view, debug_table_widget
 from items import tree_graphics_item
 
-
-TREE_DIR = rospkg.RosPack().get_path('roboteam_tactics') + "/src/trees/json/"
 PROJECTS_DIR = rospkg.RosPack().get_path('roboteam_tactics') + "/src/trees/projects/"
 
 
@@ -78,7 +76,7 @@ class TreeDebugPlugin(Plugin):
         self.init_ros()
 
 
-        self._trees.load_trees(TREE_DIR, PROJECTS_DIR)
+        self._trees.load_trees(PROJECTS_DIR)
 
         # ---- Connect signals ----
 

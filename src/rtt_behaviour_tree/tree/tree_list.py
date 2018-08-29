@@ -22,29 +22,11 @@ class TreeList(QtCore.QObject):
         self._trees = {}
 
 
-    def load_trees(self, tree_dir, projects_dir):
+    def load_trees(self, projects_dir):
         """
         Loads all behaviour trees from the json files found in the given tree_dir.
         Also loads all tree projects from the projects_dir.
         """
-        for file_name in os.listdir(tree_dir):
-            if file_name.endswith(".json"):
-
-                print "Loading " + file_name
-
-                with open(tree_dir + file_name) as data_file:
-                    data = json.load(data_file)
-
-                    # Extract the custom node types from the tree.
-                    if 'custom_nodes' in data:
-                        node_types.add_types_from_json(data['custom_nodes'])
-
-                    tree = behaviour_tree.BehaviourTree()
-                    tree.load_from_json(data)
-                    self._trees[tree.title()] = tree
-
-                    # Notify other objects of the new tree.
-                    self.tree_added.emit(tree.title())
 
         for file_name in os.listdir(projects_dir):
             if file_name.endswith(".b3"):
